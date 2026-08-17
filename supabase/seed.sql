@@ -1,0 +1,2 @@
+﻿-- Local seed script (intentionally empty).
+-- Production data is created through the application itself.

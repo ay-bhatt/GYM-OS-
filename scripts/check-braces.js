@@ -1,0 +1,11 @@
+const fs = require('fs');
+const c = fs.readFileSync('app/super-admin/gyms/page.tsx', 'utf8');
+const o = (c.match(/{/g) || []).length;
+const cl = (c.match(/}/g) || []).length;
+console.log('Braces - open:', o, 'close:', cl, 'diff:', o - cl);
+const op = (c.match(/\(/g) || []).length;
+const cp = (c.match(/\)/g) || []).length;
+console.log('Parens - open:', op, 'close:', cp, 'diff:', op - cp);
+const ob = (c.match(/\[/g) || []).length;
+const cb = (c.match(/\]/g) || []).length;
+console.log('Brackets - open:', ob, 'close:', cb, 'diff:', ob - cb);
