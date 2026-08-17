@@ -199,25 +199,28 @@ export default function SuperAdminMusicPage() {
 
   return (
     <div className="p-6 lg:p-8">
-      <div className="mb-6 flex items-start justify-between gap-4">
+      <div className="mb-8 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900">Music Library</h1>
-          <p className="text-sm text-zinc-500">Review licensing, activate approved tracks, and keep the gym queue clean.</p>
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-sky-600">Catalog</p>
+          <h1 className="admin-page-title">Music Library</h1>
+          <p className="admin-page-sub">Review licensing, activate approved tracks, and keep the gym queue clean.</p>
         </div>
+        <div className="flex items-center gap-2">
                 <button
           onClick={fetchTracks}
-          className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+          className="admin-secondary-btn"
         >
           <RefreshCcw className="h-4 w-4" />
           Refresh
         </button>
         <button
           onClick={() => setImportOpen(!importOpen)}
-          className="inline-flex items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-700 hover:bg-sky-100"
+          className="inline-flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3.5 py-2 text-sm font-medium text-sky-700 hover:bg-sky-100"
         >
           <Upload className="h-4 w-4" />
           Import
         </button>
+        </div>
       </div>
 
       <div className="mb-4 grid gap-3 md:grid-cols-4">
@@ -233,7 +236,7 @@ export default function SuperAdminMusicPage() {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          className="mb-6 rounded-xl border border-zinc-200 bg-white p-5"
+          className="admin-surface mb-6 p-5"
         >
           <h2 className="mb-3 text-sm font-semibold text-zinc-900">Import from Audius</h2>
           <p className="mb-4 text-xs text-zinc-500">
@@ -326,7 +329,7 @@ export default function SuperAdminMusicPage() {
         {error && <p className="text-sm text-red-600">{error}</p>}
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
+      <div className="admin-surface">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -534,7 +537,7 @@ export default function SuperAdminMusicPage() {
 
 function StatCard({ label, value, icon: Icon }: { label: string; value: number; icon: ComponentType<{ className?: string }> }) {
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4">
+    <div className="admin-stat">
       <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100 text-zinc-700">
         <Icon className="h-4 w-4" />
       </div>

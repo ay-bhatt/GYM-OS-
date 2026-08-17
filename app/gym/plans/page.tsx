@@ -163,14 +163,15 @@ export default function PlansPage() {
       className="p-6 lg:p-8"
     >
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900">Membership Plans</h1>
-          <p className="text-sm text-zinc-500">Create and manage membership plans.</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-500">Membership</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Plans</h1>
+          <p className="mt-1 text-sm text-zinc-500">Create and manage membership plans.</p>
         </div>
         <button
           onClick={openAddModal}
-          className="inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+          className="inline-flex items-center gap-2 rounded-2xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-200"
         >
           <Plus className="h-4 w-4" />
           Add Plan
@@ -178,7 +179,7 @@ export default function PlansPage() {
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-zinc-200 bg-white">
+      <div className="admin-surface">
         {loading ? (
           <div className="flex h-64 items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-900" />

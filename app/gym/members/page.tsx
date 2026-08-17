@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Users,
   Plus,
   Search,
   Eye,
@@ -14,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import { GymMemberCard } from '@/components/gym/member-card';
 
 interface Plan {
   id: string;
@@ -63,20 +63,6 @@ const emptyForm: MemberForm = {
   start_date: '',
   notes: '',
 };
-
-const statusStyles: Record<string, string> = {
-  active: 'bg-green-50 text-green-700 border-green-200',
-  expiring: 'bg-amber-50 text-amber-700 border-amber-200',
-  expired: 'bg-red-50 text-red-700 border-red-200',
-};
-
-function StatusBadge({ status }: { status: string }) {
-  return (
-    <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium capitalize ${statusStyles[status] || statusStyles.active}`}>
-      {status}
-    </span>
-  );
-}
 
 export default function MembersPage() {
   const router = useRouter();
@@ -247,17 +233,18 @@ export default function MembersPage() {
       className="p-6 lg:p-8"
     >
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900">Members</h1>
-          <p className="text-sm text-zinc-500">Manage your gym members.</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-500">Roster</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Members</h1>
+          <p className="mt-1 text-sm text-zinc-500">Green = fee paid. Red = due. Star = membership plan.</p>
         </div>
         <button
           onClick={openAddModal}
-          className="inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+          className="inline-flex items-center gap-2 rounded-2xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-200"
         >
           <Plus className="h-4 w-4" />
-          Add Member
+          Add
         </button>
       </div>
 
@@ -270,7 +257,7 @@ export default function MembersPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, phone, or member ID..."
-            className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-10 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-300 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+            className="admin-input"
           />
         </div>
         <select
@@ -286,83 +273,57 @@ export default function MembersPage() {
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-zinc-200 bg-white">
+      <div>
         {loading ? (
           <div className="flex h-64 items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-900" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
           </div>
         ) : error ? (
           <div className="flex h-64 items-center justify-center text-sm text-red-500">{error}</div>
+        ) : members.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-violet-200 bg-white py-12 text-center text-sm text-zinc-400">
+            No members found
+          </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-zinc-200">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500">Member ID</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500">Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500">Phone</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500">Expiry Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500">Amount</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-zinc-500">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {members.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-12 text-center text-sm text-zinc-400">
-                      No members found
-                    </td>
-                  </tr>
-                ) : (
-                  members.map((m) => (
-                    <tr key={m.id} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50">
-                      <td className="px-4 py-3 text-sm text-zinc-600">{m.member_id}</td>
-                      <td className="px-4 py-3 text-sm font-medium text-zinc-900">{m.name}</td>
-                      <td className="px-4 py-3 text-sm text-zinc-600">{m.phone || '—'}</td>
-                      <td className="px-4 py-3"><StatusBadge status={m.status} /></td>
-                      <td className="px-4 py-3 text-sm text-zinc-600">
-                        {m.expiry_date ? new Date(m.expiry_date).toLocaleDateString() : '—'}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-zinc-600">
-                        ${m.amount_paid.toFixed(2)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => router.push(`/gym/members/${m.id}`)}
-                            className="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
-                            title="View"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => openEditModal(m)}
-                            className="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
-                            title="Edit"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => setDeleteTarget(m)}
-                            className="rounded-md p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-600"
-                            title="Delete"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {members.map((m) => (
+              <div key={m.id} className="space-y-2">
+                <GymMemberCard
+                  member={m}
+                  href={`/gym/members/${m.id}`}
+                  meta={m.expiry_date ? `Expires ${new Date(m.expiry_date).toLocaleDateString()}` : m.phone || undefined}
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => router.push(`/gym/members/${m.id}`)}
+                    className="flex-1 rounded-2xl bg-white py-2 text-xs font-medium text-violet-700 shadow-sm"
+                    title="View"
+                  >
+                    <Eye className="mx-auto h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => openEditModal(m)}
+                    className="flex-1 rounded-2xl bg-white py-2 text-xs font-medium text-zinc-600 shadow-sm"
+                    title="Edit"
+                  >
+                    <Pencil className="mx-auto h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setDeleteTarget(m)}
+                    className="flex-1 rounded-2xl bg-white py-2 text-xs font-medium text-rose-600 shadow-sm"
+                    title="Delete"
+                  >
+                    <Trash2 className="mx-auto h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
         {/* Pagination */}
         {!loading && members.length > 0 && (
-          <div className="flex items-center justify-between border-t border-zinc-200 px-4 py-3">
+          <div className="mt-4 flex items-center justify-between px-1 py-2">
             <p className="text-xs text-zinc-500">
               Page {page} of {totalPages} · {total} total
             </p>

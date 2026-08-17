@@ -74,13 +74,13 @@ export default function SuperAdminDashboard() {
 
   return (
     <div className="p-6 lg:p-8">
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-zinc-900">Platform Overview</h1>
-        <p className="text-sm text-zinc-500">All gyms across the platform.</p>
+      <div className="mb-8">
+        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-sky-600">Platform</p>
+        <h1 className="admin-page-title">Overview</h1>
+        <p className="admin-page-sub">Every gym, member, and dollar across ForgeGym.</p>
       </div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-7">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-7">
         {cards.map((card, i) => {
           const Icon = card.icon;
           return (
@@ -89,24 +89,23 @@ export default function SuperAdminDashboard() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05, duration: 0.2 }}
-              className="rounded-xl border border-zinc-200 bg-white p-4"
+              className="admin-stat"
             >
-              <div className={`mb-3 flex h-9 w-9 items-center justify-center rounded-lg ${card.bg}`}>
+              <div className={`mb-3 flex h-9 w-9 items-center justify-center rounded-xl ${card.bg}`}>
                 <Icon className={`h-4 w-4 ${card.color}`} />
               </div>
-              <p className="text-2xl font-semibold text-zinc-900">{card.value}</p>
+              <p className="text-2xl font-semibold tracking-tight text-zinc-900">{card.value}</p>
               <p className="mt-0.5 text-xs text-zinc-500">{card.label}</p>
             </motion.div>
           );
         })}
       </div>
 
-      {/* Gyms Table */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.3 }}
-        className="mt-6 rounded-xl border border-zinc-200 bg-white p-5"
+        className="admin-surface mt-6 p-5"
       >
         <h2 className="mb-4 text-sm font-semibold text-zinc-900">All Gyms</h2>
         <div className="overflow-x-auto">

@@ -407,14 +407,15 @@ setSuccess(`Deleted ${deleteGym.name}.`);
 
   return (
     <div className="p-6 lg:p-8">
-      <div className="mb-6 flex items-start justify-between gap-4">
+      <div className="mb-8 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900">Gyms</h1>
-          <p className="text-sm text-zinc-500">Manage every gym on the platform.</p>
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-sky-600">Network</p>
+          <h1 className="admin-page-title">Gyms</h1>
+          <p className="admin-page-sub">Manage every gym on the platform.</p>
         </div>
         <button
           onClick={openCreate}
-          className="inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800"
+          className="admin-primary-btn"
         >
           <Plus className="h-4 w-4" />
           Add Gym
@@ -428,7 +429,7 @@ setSuccess(`Deleted ${deleteGym.name}.`);
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, ID, owner, or username..."
-            className="w-full rounded-lg border border-zinc-200 bg-white py-2.5 pl-10 pr-3 text-sm outline-none focus:border-zinc-400"
+            className="admin-input"
           />
         </div>
         {(error || success) && (
@@ -437,20 +438,20 @@ setSuccess(`Deleted ${deleteGym.name}.`);
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-zinc-300 bg-white p-10 text-center">
+        <div className="admin-surface p-10 text-center">
           <Building2 className="mx-auto h-10 w-10 text-zinc-300" />
           <h2 className="mt-4 text-base font-semibold text-zinc-900">No gyms have been added yet.</h2>
           <p className="mt-1 text-sm text-zinc-500">Create your first gym to start managing the platform.</p>
           <button
             onClick={openCreate}
-            className="mt-5 inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800"
+            className="admin-primary-btn mt-5"
           >
             <Plus className="h-4 w-4" />
             Add Gym
           </button>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
+        <div className="admin-surface">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -543,20 +544,20 @@ setSuccess(`Deleted ${deleteGym.name}.`);
 
       <AnimatePresence>
         {modalOpen && (
-          <>
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setModalOpen(false)}
-              className="fixed inset-0 z-[100] bg-black/30"
+              className="absolute inset-0 bg-zinc-950/45 backdrop-blur-[2px]"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
               transition={{ duration: 0.18 }}
-              className="fixed inset-4 z-[110] max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2"
+              className="relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl"
             >
               <div className="mb-4 flex items-center justify-between">
                 <div>
@@ -750,7 +751,7 @@ setSuccess(`Deleted ${deleteGym.name}.`);
                 )}
               </form>
             </motion.div>
-          </>
+          </div>
         )}
       </AnimatePresence>
 

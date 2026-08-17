@@ -116,7 +116,33 @@ export async function POST(request: NextRequest) {
     if (checkError) throw checkError;
 
     if (existingAttendance) {
-      // Already checked in today
+      if (!existingAttendance.check_out_time) {
+        const { data: checkedOut, error: checkoutError } = await supabase
+          .from('attendance')
+          .update({ check_out_time: now })
+          .eq('id', existingAttendance.id)
+          .select('id, check_in_time, check_out_time')
+          .maybeSingle();
+
+        if (checkoutError) throw checkoutError;
+
+        return NextResponse.json({
+          data: {
+            member: {
+              id: member.id,
+              member_id: member.member_id,
+              name: member.name,
+              phone: member.phone,
+              status: member.status,
+            },
+            attendance: checkedOut,
+            alreadyCheckedIn: true,
+            action: 'checkout',
+          },
+          message: 'Member checked out',
+        });
+      }
+
       return NextResponse.json({
         data: {
           member: {
@@ -128,8 +154,9 @@ export async function POST(request: NextRequest) {
           },
           attendance: existingAttendance,
           alreadyCheckedIn: true,
+          action: 'already_done',
         },
-        message: 'Member already checked in today',
+        message: 'Member already completed a visit today',
       });
     }
 
@@ -159,6 +186,7 @@ export async function POST(request: NextRequest) {
         },
         attendance,
         alreadyCheckedIn: false,
+        action: 'checkin',
       },
     }, { status: 201 });
   } catch (error) {

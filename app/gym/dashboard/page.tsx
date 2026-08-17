@@ -1,30 +1,34 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
-  Users,
-  UserCheck,
-  UserX,
-  Clock,
-  DollarSign,
-  TrendingUp,
   Calendar,
-  Lock,
   Copy,
+  DollarSign,
   Loader2,
+  Lock,
+  LogOut,
+  QrCode,
+  TrendingUp,
+  UserCheck,
+  Users,
+  UserX,
 } from 'lucide-react';
 import {
-  AreaChart,
   Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
 } from 'recharts';
+import { GymMemberCard, type GymMemberCardData } from '@/components/gym/member-card';
+import { formatClock } from '@/lib/member-visual';
 
 interface Stats {
   totalMembers: number;
@@ -33,31 +37,23 @@ interface Stats {
   expiredMembers: number;
   totalRevenue: number;
   todayAttendance: number;
+  insideNow: number;
+  leftToday: number;
 }
 
-interface AttendanceData {
-  date: string;
-  count: number;
-}
-
-interface RevenueData {
-  month: string;
-  revenue: number;
-}
-
-interface RecentMember {
-  id: string;
-  member_id: string;
-  name: string;
-  status: string;
-  expiry_date: string | null;
+interface FloorMember extends GymMemberCardData {
+  attendanceId: string;
+  check_in_time: string | null;
+  check_out_time: string | null;
 }
 
 export default function GymDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
-  const [attendanceData, setAttendanceData] = useState<AttendanceData[]>([]);
-  const [revenueData, setRevenueData] = useState<RevenueData[]>([]);
-  const [recentMembers, setRecentMembers] = useState<RecentMember[]>([]);
+  const [attendanceData, setAttendanceData] = useState<{ date: string; count: number }[]>([]);
+  const [revenueData, setRevenueData] = useState<{ month: string; revenue: number }[]>([]);
+  const [inside, setInside] = useState<FloorMember[]>([]);
+  const [left, setLeft] = useState<FloorMember[]>([]);
+  const [floorTab, setFloorTab] = useState<'inside' | 'left'>('inside');
   const [loading, setLoading] = useState(true);
   const [resettingPassword, setResettingPassword] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
@@ -71,14 +67,17 @@ export default function GymDashboard() {
       setStats(data.stats);
       setAttendanceData(data.attendanceChart || []);
       setRevenueData(data.revenueChart || []);
-      setRecentMembers(data.recentMembers || []);
+      setInside(data.floor?.inside || []);
+      setLeft(data.floor?.left || []);
     } finally {
       setLoading(false);
     }
   }, []);
 
-    useEffect(() => {
+  useEffect(() => {
     fetchDashboard();
+    const timer = window.setInterval(fetchDashboard, 20000);
+    return () => window.clearInterval(timer);
   }, [fetchDashboard]);
 
   const handleResetPassword = async () => {
@@ -101,269 +100,200 @@ export default function GymDashboard() {
     }
   };
 
+  const checkoutMember = async (attendanceId: string) => {
+    await fetch(`/api/attendance/${attendanceId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    fetchDashboard();
+  };
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center p-8">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-900" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
       </div>
     );
   }
 
-  const cards = [
+  const highlightCards = [
+    { label: 'On the floor', value: stats?.insideNow ?? 0, icon: UserCheck, tone: 'from-violet-500 to-indigo-500' },
+    { label: 'Left today', value: stats?.leftToday ?? 0, icon: LogOut, tone: 'from-orange-400 to-amber-500' },
+    { label: 'Total members', value: stats?.totalMembers ?? 0, icon: Users, tone: 'from-sky-400 to-cyan-500' },
+    { label: 'Unpaid / expired', value: stats?.expiredMembers ?? 0, icon: UserX, tone: 'from-rose-400 to-pink-500' },
     {
-      label: 'Total Members',
-      value: stats?.totalMembers ?? 0,
-      icon: Users,
-      color: 'text-zinc-900',
-      bg: 'bg-zinc-100',
-    },
-    {
-      label: 'Active',
-      value: stats?.activeMembers ?? 0,
-      icon: UserCheck,
-      color: 'text-green-600',
-      bg: 'bg-green-50',
-    },
-    {
-      label: 'Expiring Soon',
-      value: stats?.expiringMembers ?? 0,
-      icon: Clock,
-      color: 'text-amber-600',
-      bg: 'bg-amber-50',
-    },
-    {
-      label: 'Expired',
-      value: stats?.expiredMembers ?? 0,
-      icon: UserX,
-      color: 'text-red-600',
-      bg: 'bg-red-50',
-    },
-    {
-      label: 'Total Revenue',
-      value: `$${(stats?.totalRevenue ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      label: 'Revenue',
+      value: `$${(stats?.totalRevenue ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
       icon: DollarSign,
-      color: 'text-sky-600',
-      bg: 'bg-sky-50',
+      tone: 'from-emerald-400 to-teal-500',
     },
-    {
-      label: 'Today\'s Attendance',
-      value: stats?.todayAttendance ?? 0,
-      icon: Calendar,
-      color: 'text-zinc-900',
-      bg: 'bg-zinc-100',
-    },
+    { label: "Today's visits", value: stats?.todayAttendance ?? 0, icon: Calendar, tone: 'from-fuchsia-400 to-violet-500' },
   ];
 
+  const floorMembers = floorTab === 'inside' ? inside : left;
+
   return (
-    <div className="p-6 lg:p-8">
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-zinc-900">Dashboard</h1>
-        <p className="text-sm text-zinc-500">Overview of your gym's performance.</p>
+    <div className="px-4 py-5 lg:p-8">
+      <div className="mb-5 flex items-end justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-500">Live desk</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Who is in the gym</h1>
+          <p className="mt-1 text-sm text-zinc-500">Scan a member QR to check them in or out.</p>
+        </div>
+        <Link
+          href="/gym/attendance"
+          className="hidden items-center gap-2 rounded-2xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-200 lg:inline-flex"
+        >
+          <QrCode className="h-4 w-4" />
+          Scan
+        </Link>
       </div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-        {cards.map((card, i) => {
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+        {highlightCards.map((card, i) => {
           const Icon = card.icon;
           return (
             <motion.div
               key={card.label}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05, duration: 0.2 }}
-              className="rounded-xl border border-zinc-200 bg-white p-4"
+              transition={{ delay: i * 0.04 }}
+              className={`rounded-3xl bg-gradient-to-br ${card.tone} p-4 text-white shadow-md`}
             >
-              <div className={`mb-3 flex h-9 w-9 items-center justify-center rounded-lg ${card.bg}`}>
-                <Icon className={`h-4 w-4 ${card.color}`} />
-              </div>
-              <p className="text-2xl font-semibold text-zinc-900">{card.value}</p>
-              <p className="mt-0.5 text-xs text-zinc-500">{card.label}</p>
+              <Icon className="mb-4 h-5 w-5 text-white/80" />
+              <p className="text-2xl font-semibold tracking-tight">{card.value}</p>
+              <p className="mt-1 text-xs text-white/80">{card.label}</p>
             </motion.div>
           );
         })}
       </div>
 
-      {/* Charts */}
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.3 }}
-          className="rounded-xl border border-zinc-200 bg-white p-5"
-        >
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-zinc-900">Attendance (Last 14 Days)</h2>
-            <TrendingUp className="h-4 w-4 text-zinc-400" />
+      <div className="mt-6 rounded-[28px] bg-white p-4 shadow-sm shadow-violet-100">
+        <div className="mb-4 flex rounded-2xl bg-violet-50 p-1">
+          <button
+            onClick={() => setFloorTab('inside')}
+            className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium ${
+              floorTab === 'inside' ? 'bg-white text-violet-700 shadow-sm' : 'text-zinc-500'
+            }`}
+          >
+            Inside now ({inside.length})
+          </button>
+          <button
+            onClick={() => setFloorTab('left')}
+            className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium ${
+              floorTab === 'left' ? 'bg-white text-violet-700 shadow-sm' : 'text-zinc-500'
+            }`}
+          >
+            Left today ({left.length})
+          </button>
+        </div>
+
+        {floorMembers.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-violet-100 py-10 text-center text-sm text-zinc-400">
+            {floorTab === 'inside' ? 'No one is checked in right now.' : 'No check-outs yet today.'}
           </div>
-          <ResponsiveContainer width="100%" height={220}>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {floorMembers.map((member) => (
+              <div key={member.attendanceId} className="space-y-2">
+                <GymMemberCard
+                  member={member}
+                  href={`/gym/members/${member.id}`}
+                  meta={
+                    floorTab === 'inside'
+                      ? `In since ${formatClock(member.check_in_time)}`
+                      : `Left at ${formatClock(member.check_out_time)}`
+                  }
+                />
+                {floorTab === 'inside' && (
+                  <button
+                    onClick={() => checkoutMember(member.attendanceId)}
+                    className="w-full rounded-2xl border border-violet-100 bg-violet-50 py-2 text-xs font-medium text-violet-700"
+                  >
+                    Check out
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        <div className="rounded-[28px] bg-white p-5 shadow-sm shadow-violet-100">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-zinc-900">Attendance</h2>
+            <TrendingUp className="h-4 w-4 text-violet-400" />
+          </div>
+          <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={attendanceData}>
               <defs>
                 <linearGradient id="attendanceGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#7c5cff" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#7c5cff" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" vertical={false} />
               <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#71717a' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: '#71717a' }} axisLine={false} tickLine={false} allowDecimals={false} />
-              <Tooltip
-                contentStyle={{
-                  borderRadius: '8px',
-                  border: '1px solid #e4e4e7',
-                  fontSize: '12px',
-                }}
-              />
-              <Area
-                type="monotone"
-                dataKey="count"
-                stroke="#0ea5e9"
-                strokeWidth={2}
-                fill="url(#attendanceGradient)"
-              />
+              <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #ede9fe', fontSize: '12px' }} />
+              <Area type="monotone" dataKey="count" stroke="#7c5cff" strokeWidth={2} fill="url(#attendanceGradient)" />
             </AreaChart>
           </ResponsiveContainer>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.3 }}
-          className="rounded-xl border border-zinc-200 bg-white p-5"
-        >
+        <div className="rounded-[28px] bg-white p-5 shadow-sm shadow-violet-100">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-zinc-900">Revenue (Last 6 Months)</h2>
-            <DollarSign className="h-4 w-4 text-zinc-400" />
+            <h2 className="text-sm font-semibold text-zinc-900">Revenue</h2>
+            <DollarSign className="h-4 w-4 text-violet-400" />
           </div>
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={200}>
             <BarChart data={revenueData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" vertical={false} />
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#71717a' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: '#71717a' }} axisLine={false} tickLine={false} />
               <Tooltip
-                contentStyle={{
-                  borderRadius: '8px',
-                  border: '1px solid #e4e4e7',
-                  fontSize: '12px',
-                }}
+                contentStyle={{ borderRadius: '12px', border: '1px solid #ede9fe', fontSize: '12px' }}
                 formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
               />
-              <Bar dataKey="revenue" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="revenue" fill="#7c5cff" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-        </motion.div>
+        </div>
       </div>
 
-      {/* Recent Members */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.3 }}
-        className="mt-6 rounded-xl border border-zinc-200 bg-white p-5"
-      >
-        <h2 className="mb-4 text-sm font-semibold text-zinc-900">Recent Members</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-zinc-200">
-                <th className="pb-2 text-left text-xs font-medium text-zinc-500">Member ID</th>
-                <th className="pb-2 text-left text-xs font-medium text-zinc-500">Name</th>
-                <th className="pb-2 text-left text-xs font-medium text-zinc-500">Status</th>
-                <th className="pb-2 text-left text-xs font-medium text-zinc-500">Expiry</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentMembers.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="py-6 text-center text-sm text-zinc-400">No members yet</td>
-                </tr>
-              ) : (
-                recentMembers.map((m) => (
-                  <tr key={m.id} className="border-b border-zinc-100 last:border-0">
-                    <td className="py-3 text-sm text-zinc-600">{m.member_id}</td>
-                    <td className="py-3 text-sm font-medium text-zinc-900">{m.name}</td>
-                    <td className="py-3">
-                      <StatusBadge status={m.status} />
-                    </td>
-                    <td className="py-3 text-sm text-zinc-600">
-                      {m.expiry_date ? new Date(m.expiry_date).toLocaleDateString() : '—'}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-                </div>
-      </motion.div>
-
-      {/* Account Security */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5, duration: 0.3 }}
-        className="mt-6 rounded-xl border border-zinc-200 bg-white p-5"
-      >
-        <h2 className="mb-4 text-sm font-semibold text-zinc-900">Account Security</h2>
-        <div className="space-y-4">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-zinc-500">Gym Admin Login</p>
-            <p className="mt-1 text-sm text-zinc-600">
-              Your username is pre-set when the gym was created. You can reset your password below
-              if you've forgotten it or need a fresh temporary credential.
-            </p>
-          </div>
-
-          <button
-            onClick={handleResetPassword}
-            disabled={resettingPassword}
-            className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-60"
-          >
-            {resettingPassword ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Lock className="h-4 w-4" />
-            )}
-            {resettingPassword ? 'Resetting…' : 'Reset Password'}
-          </button>
-
-          {tempPassword && (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs uppercase tracking-wide text-emerald-700">New Temporary Password</p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(tempPassword);
-                    setTempPassword(null);
-                  }}
-                  className="rounded p-1 text-emerald-700 hover:bg-emerald-100"
-                  title="Copy to clipboard"
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                </button>
-              </div>
-              <code className="block font-mono text-sm text-zinc-900 select-all">{tempPassword}</code>
-              <p className="mt-2 text-xs text-zinc-600">
-                Use this to sign in, then change it from your account settings.
-              </p>
+      <div className="mt-6 rounded-[28px] bg-white p-5 shadow-sm shadow-violet-100">
+        <h2 className="mb-3 text-sm font-semibold text-zinc-900">Account security</h2>
+        <p className="text-sm text-zinc-500">Reset your gym admin password if you need a fresh temporary login.</p>
+        <button
+          onClick={handleResetPassword}
+          disabled={resettingPassword}
+          className="mt-4 inline-flex items-center gap-2 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-2.5 text-sm font-medium text-violet-700 disabled:opacity-60"
+        >
+          {resettingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
+          {resettingPassword ? 'Resetting…' : 'Reset password'}
+        </button>
+        {tempPassword && (
+          <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs uppercase tracking-wide text-emerald-700">Temporary password</p>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(tempPassword);
+                  setTempPassword(null);
+                }}
+                className="rounded p-1 text-emerald-700"
+              >
+                <Copy className="h-3.5 w-3.5" />
+              </button>
             </div>
-          )}
-
-                    {resetError && <p className="text-sm text-red-600">{resetError}</p>}
-        </div>
-      </motion.div>
+            <code className="block select-all font-mono text-sm text-zinc-900">{tempPassword}</code>
+          </div>
+        )}
+        {resetError && <p className="mt-2 text-sm text-red-600">{resetError}</p>}
+      </div>
     </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    active: 'bg-green-50 text-green-700 border-green-200',
-    expiring: 'bg-amber-50 text-amber-700 border-amber-200',
-    expired: 'bg-red-50 text-red-700 border-red-200',
-  };
-  return (
-    <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${styles[status] || styles.active}`}>
-      {status}
-    </span>
   );
 }

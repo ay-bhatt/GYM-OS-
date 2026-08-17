@@ -39,6 +39,7 @@ interface ScanResult {
     check_out_time: string | null;
   } | null;
   alreadyCheckedIn: boolean;
+  action?: 'checkin' | 'checkout' | 'already_done';
 }
 
 type TabType = 'scan' | 'history';
@@ -60,12 +61,12 @@ export default function AttendancePage() {
       className="p-6 lg:p-8"
     >
       <div className="mb-6">
-        <h1 className="text-xl font-semibold text-zinc-900">Attendance</h1>
-        <p className="text-sm text-zinc-500">Scan QR codes to check in members.</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-500">Floor</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Scan & attendance</h1>
+        <p className="mt-1 text-sm text-zinc-500">First scan checks in. Second scan checks out.</p>
       </div>
 
-      {/* Tabs */}
-      <div className="mb-6 inline-flex rounded-lg border border-zinc-200 bg-white p-1">
+      <div className="mb-6 inline-flex rounded-xl border border-zinc-200/80 bg-white/80 p-1 shadow-sm">
         <button
           onClick={() => setTab('scan')}
           className={`inline-flex items-center gap-2 rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
@@ -179,7 +180,7 @@ function ScanTab() {
   return (
     <div className="max-w-2xl">
       {/* Scanner area */}
-      <div className="rounded-xl border border-zinc-200 bg-white p-6">
+      <div className="admin-surface p-6">
         <div className="flex flex-col items-center">
           {/* Camera container */}
           <div className="relative w-full max-w-sm">
@@ -214,7 +215,7 @@ function ScanTab() {
               <button
                 onClick={startScanner}
                 disabled={processing}
-                className="inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-2xl bg-violet-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-violet-200 disabled:opacity-50"
               >
                 <Camera className="h-4 w-4" />
                 Start Camera
@@ -245,13 +246,15 @@ function ScanTab() {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
             className={`mt-4 rounded-xl border p-5 ${
-              scanResult.alreadyCheckedIn
-                ? 'border-amber-200 bg-amber-50'
-                : 'border-green-200 bg-green-50'
+              scanResult.action === 'checkout'
+                ? 'border-violet-200 bg-violet-50'
+                : scanResult.action === 'already_done'
+                  ? 'border-amber-200 bg-amber-50'
+                  : 'border-green-200 bg-green-50'
             }`}
           >
             <div className="flex items-start gap-3">
-              {scanResult.alreadyCheckedIn ? (
+              {scanResult.action === 'already_done' ? (
                 <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600" />
               ) : (
                 <motion.div
@@ -259,12 +262,22 @@ function ScanTab() {
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
                 >
-                  <CheckCircle className="h-5 w-5 flex-shrink-0 text-green-600" />
+                  <CheckCircle className={`h-5 w-5 flex-shrink-0 ${scanResult.action === 'checkout' ? 'text-violet-600' : 'text-green-600'}`} />
                 </motion.div>
               )}
               <div className="flex-1">
-                <p className={`text-sm font-medium ${scanResult.alreadyCheckedIn ? 'text-amber-900' : 'text-green-900'}`}>
-                  {scanResult.alreadyCheckedIn ? 'Already checked in' : 'Check-in successful'}
+                <p className={`text-sm font-medium ${
+                  scanResult.action === 'checkout'
+                    ? 'text-violet-900'
+                    : scanResult.action === 'already_done'
+                      ? 'text-amber-900'
+                      : 'text-green-900'
+                }`}>
+                  {scanResult.action === 'checkout'
+                    ? 'Checked out'
+                    : scanResult.action === 'already_done'
+                      ? 'Visit already completed today'
+                      : 'Checked in'}
                 </p>
                 <div className="mt-2 space-y-1 text-sm">
                   <p className="text-zinc-700">
@@ -406,7 +419,7 @@ function HistoryTab() {
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-zinc-200 bg-white">
+      <div className="admin-surface">
         {loading ? (
           <div className="flex h-64 items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-900" />

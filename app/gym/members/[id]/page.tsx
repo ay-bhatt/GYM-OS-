@@ -166,16 +166,36 @@ export default function MemberDetailPage() {
       </button>
 
       {/* Header card */}
-      <div className="mb-6 rounded-xl border border-zinc-200 bg-white p-6">
+      <div className={`relative mb-6 overflow-hidden rounded-[28px] border p-6 shadow-sm ${
+        member.status !== 'expired' && Number(member.amount_paid) > 0
+          ? 'border-emerald-100 bg-emerald-50'
+          : 'border-rose-100 bg-rose-50'
+      }`}>
+        {member.plan_id && (
+          <span className="absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-full bg-amber-400 text-white shadow-sm">
+            <span className="text-sm">★</span>
+          </span>
+        )}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-900 text-xl font-semibold text-white">
+            <div className={`flex h-16 w-16 items-center justify-center rounded-full text-xl font-semibold text-white ${
+              member.status !== 'expired' && Number(member.amount_paid) > 0 ? 'bg-emerald-500' : 'bg-rose-400'
+            }`}>
               {initials}
             </div>
             <div>
               <h1 className="text-xl font-semibold text-zinc-900">{member.name}</h1>
-              <p className="text-sm text-zinc-500">{member.member_id}</p>
-              <div className="mt-1"><StatusBadge status={member.status} /></div>
+              <p className="text-sm text-zinc-500">{member.member_id}{member.gender ? ` · ${member.gender}` : ''}</p>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <StatusBadge status={member.status} />
+                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                  member.status !== 'expired' && Number(member.amount_paid) > 0
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-rose-100 text-rose-700'
+                }`}>
+                  {member.status !== 'expired' && Number(member.amount_paid) > 0 ? 'Fee paid' : 'Fee due'}
+                </span>
+              </div>
             </div>
           </div>
         </div>

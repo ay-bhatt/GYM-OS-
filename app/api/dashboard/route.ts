@@ -54,11 +54,56 @@ export async function GET() {
 
       const totalRevenue = (revenueRows || []).reduce((sum, p) => sum + Number(p.amount), 0);
 
-      const { count: todayAttendance } = await supabase
+      const { data: todayAttendanceRows } = await supabase
         .from('attendance')
-        .select('*', { count: 'exact', head: true })
+        .select(`
+          id, check_in_time, check_out_time, status,
+          members!inner(id, member_id, name, phone, gender, status, plan_id, amount_paid, expiry_date)
+        `)
         .eq('gym_id', gymId)
-        .eq('date', today);
+        .eq('date', today)
+        .order('check_in_time', { ascending: false });
+
+      const todayVisits = todayAttendanceRows || [];
+      const mapVisit = (row: {
+        id: string;
+        check_in_time: string | null;
+        check_out_time: string | null;
+        members:
+          | {
+              id: string;
+              member_id: string;
+              name: string;
+              phone: string | null;
+              gender: string | null;
+              status: string;
+              plan_id: string | null;
+              amount_paid: number;
+              expiry_date: string | null;
+            }
+          | {
+              id: string;
+              member_id: string;
+              name: string;
+              phone: string | null;
+              gender: string | null;
+              status: string;
+              plan_id: string | null;
+              amount_paid: number;
+              expiry_date: string | null;
+            }[];
+      }) => {
+        const member = Array.isArray(row.members) ? row.members[0] : row.members;
+        return {
+          attendanceId: row.id,
+          check_in_time: row.check_in_time,
+          check_out_time: row.check_out_time,
+          ...member,
+        };
+      };
+      const inside = todayVisits.filter((row) => !row.check_out_time).map(mapVisit);
+      const left = todayVisits.filter((row) => Boolean(row.check_out_time)).map(mapVisit);
+      const todayAttendance = todayVisits.length;
 
       // Attendance chart: last 14 days
       const fourteenDaysAgo = new Date();
@@ -122,7 +167,10 @@ export async function GET() {
           expiredMembers: expiredMembers || 0,
           totalRevenue,
           todayAttendance: todayAttendance || 0,
+          insideNow: inside.length,
+          leftToday: left.length,
         },
+        floor: { inside, left },
         attendanceChart,
         revenueChart,
         recentMembers: recentMembers || [],

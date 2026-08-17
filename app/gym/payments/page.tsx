@@ -186,10 +186,11 @@ export default function PaymentsPage() {
       className="p-6 lg:p-8"
     >
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900">Payments</h1>
-          <p className="text-sm text-zinc-500">Track member payments and revenue.</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-500">Revenue</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Payments</h1>
+          <p className="mt-1 text-sm text-zinc-500">Track member payments and revenue.</p>
         </div>
         <button
           onClick={() => {
@@ -197,7 +198,7 @@ export default function PaymentsPage() {
             setFormError('');
             setModalOpen(true);
           }}
-          className="inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+          className="inline-flex items-center gap-2 rounded-2xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-200"
         >
           <Plus className="h-4 w-4" />
           Add Payment
@@ -214,7 +215,7 @@ export default function PaymentsPage() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05, duration: 0.2 }}
-              className="rounded-xl border border-zinc-200 bg-white p-4"
+              className="admin-stat"
             >
               <div className={`mb-3 flex h-9 w-9 items-center justify-center rounded-lg ${card.bg}`}>
                 <Icon className={`h-4 w-4 ${card.color}`} />
@@ -237,12 +238,12 @@ export default function PaymentsPage() {
             setPage(1);
           }}
           placeholder="Search by member name..."
-          className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-10 pr-4 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-300 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+          className="admin-input"
         />
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-zinc-200 bg-white">
+      <div className="admin-surface">
         {loading ? (
           <div className="flex h-64 items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-900" />
