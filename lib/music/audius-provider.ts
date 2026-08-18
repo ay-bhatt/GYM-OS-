@@ -147,6 +147,11 @@ export class AudiusMusicProvider extends MusicProvider {
     return [];
   }
 
+  parseTrack(raw: unknown): MusicTrack | null {
+    if (!raw || typeof raw !== 'object') return null;
+    return this.mapTrack(raw as AudiusRawTrack);
+  }
+
   private mapTrack(raw: AudiusRawTrack): MusicTrack {
     const user = raw.user || {};
     const artist = (user.name && user.name.trim()) || user.handle || 'Unknown Artist';

@@ -14,9 +14,9 @@
 
 import type { MusicTrack, EnergyLevel } from './provider';
 
-const ARTIST_COOLDOWN = 8;
+const ARTIST_COOLDOWN = 12;
 const GENRE_COOLDOWN = 6;
-const MAX_HISTORY = 200;
+const MAX_HISTORY = 900;
 
 export interface ShuffleState {
   history: string[]; // provider_track_id values

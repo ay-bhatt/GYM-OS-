@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { musicService } from '@/lib/music/music-service';
 
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+
 /**
  * GET /api/music/tracks
  *

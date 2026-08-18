@@ -22,6 +22,7 @@ import { AudiusMusicProvider } from './audius-provider';
 import { PixabayMusicProvider, rewritePixabayStreamUrl } from './pixabay-provider';
 import { FALLBACK_CATALOG, MUSIC_CATEGORIES, DEFAULT_CATEGORY, isTrackGymSafe } from './catalog';
 import { MUSIC_PROVIDER } from './config';
+import { findWorkoutTrack, getWorkoutCatalog } from './workout-catalog';
 
 export type MusicServiceOptions = {
   /** Limit results to a single category (e.g. 'workout'). */
@@ -59,39 +60,39 @@ export class MusicService {
   async getApprovedTracks(opts: MusicServiceOptions = {}): Promise<MusicTrack[]> {
     let source: MusicTrack[] = [];
 
-    if (this.provider.name === 'pixabay') {
-      try {
-        source = (await this.provider.getFeaturedTracks()).filter(isTrackGymSafe);
-      } catch (error) {
-        console.warn('[music] pixabay featured catalog failed', error);
-      }
+    try {
+      source = await getWorkoutCatalog();
+    } catch (error) {
+      console.warn('[music] workout catalog failed', error);
     }
 
     if (source.length === 0) {
       const fromDb = await this.fetchApprovedFromDb(opts.category);
       if (fromDb && fromDb.length > 0) {
         source = fromDb.filter(isTrackGymSafe);
+      } else if (this.provider.name === 'pixabay') {
+        source = (await this.provider.getFeaturedTracks()).filter(isTrackGymSafe);
       } else {
         source = FALLBACK_CATALOG.filter(isTrackGymSafe);
       }
     }
 
     if (opts.category) {
-      source = source.filter((t) => t.category === opts.category);
+      const filtered = source.filter((t) => t.category === opts.category);
+      if (filtered.length >= 20) source = filtered;
     }
 
-    const enriched = await Promise.all(source.map((t) => this.enrichTrack(t)));
-    return enriched.map(rewritePixabayStreamUrl);
+    return source.map(rewritePixabayStreamUrl);
   }
 
   async getTrackById(id: string): Promise<MusicTrack | null> {
+    const cached = findWorkoutTrack(id);
+    if (cached) return cached;
+
     const fromDb = await this.fetchTrackFromDb(id);
     if (fromDb) return this.enrichTrack(fromDb);
 
     if (this.provider.name === 'pixabay') {
-      const featured = await this.provider.getFeaturedTracks();
-      const match = featured.find((t) => t.id === id || t.providerTrackId === id || `pixabay-${t.providerTrackId}` === id);
-      if (match) return this.enrichTrack(match);
       const providerId = id.startsWith('pixabay-') ? id.slice('pixabay-'.length) : id;
       const fromProvider = await this.provider.getTrack(providerId);
       if (fromProvider) return this.enrichTrack(fromProvider);
@@ -213,7 +214,13 @@ export class MusicService {
   async resolveStreamUrl(trackId: string): Promise<string | null> {
     const track = await this.getTrackById(trackId);
     if (!track || track.status !== 'active') return null;
+    if (track.streamUrl && track.streamUrl.startsWith('http')) {
+      return track.streamUrl;
+    }
     try {
+      if (track.provider === 'audius') {
+        return new AudiusMusicProvider().getStreamUrl(track.providerTrackId);
+      }
       return await this.provider.getStreamUrl(track.providerTrackId);
     } catch (e) {
       console.warn('[music] getStreamUrl failed, using cached value', e);

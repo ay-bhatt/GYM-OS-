@@ -339,22 +339,24 @@ export class PixabayMusicProvider extends MusicProvider {
 
   private async fetchGymCatalog(): Promise<MusicTrack[]> {
     if (!PIXABAY_API_KEY) return [];
-    const picked = shuffle(GYM_QUERIES).slice(0, 4);
-    const pages = [1, 1 + Math.floor(Math.random() * 6)];
-    const batches = await Promise.all(
-      picked.flatMap((q) =>
-        pages.map((page) =>
-          this.request({
-            q,
-            page: String(page),
-            per_page: '40',
-            safesearch: 'true',
-            order: Math.random() > 0.5 ? 'latest' : 'popular',
-          })
-        )
-      )
-    );
-    return this.unique(batches.flat());
+    const pages = [1, 2, 3, 4, 5];
+    const collected: MusicTrack[] = [];
+    for (const q of GYM_QUERIES) {
+      for (const page of pages) {
+        const batch = await this.request({
+          q,
+          page: String(page),
+          per_page: '200',
+          safesearch: 'true',
+          order: page % 2 === 0 ? 'latest' : 'popular',
+        });
+        collected.push(...batch);
+        if (this.unique(collected).length >= 1000) {
+          return this.unique(collected);
+        }
+      }
+    }
+    return this.unique(collected);
   }
 
   private unique(tracks: MusicTrack[]): MusicTrack[] {
