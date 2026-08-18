@@ -13,7 +13,11 @@ export const AUDIUS_API_BASE = 'https://api.audius.co';
  * - 'audius' -> AudiusMusicProvider (default)
  * - Add more providers and switch here without touching the UI.
  */
-export const MUSIC_PROVIDER = process.env.MUSIC_PROVIDER || 'audius';
+export const MUSIC_PROVIDER = process.env.MUSIC_PROVIDER || 'pixabay';
+
+/** Free key from https://pixabay.com/api/docs/ — also unlocks /api/audio/. */
+export const PIXABAY_API_KEY = process.env.PIXABAY_API_KEY || '';
+export const PIXABAY_AUDIO_API = 'https://pixabay.com/api/audio/';
 
 /**
  * Optional Audius API key (free tier). Audius streaming endpoints do not require

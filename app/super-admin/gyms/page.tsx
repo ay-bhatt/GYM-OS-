@@ -406,8 +406,8 @@ setSuccess(`Deleted ${deleteGym.name}.`);
   }
 
   return (
-    <div className="p-6 lg:p-8">
-      <div className="mb-8 flex items-start justify-between gap-4">
+    <div className="px-4 py-4 lg:p-8">
+      <div className="mb-6 flex items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-sky-600">Network</p>
           <h1 className="admin-page-title">Gyms</h1>
@@ -451,7 +451,33 @@ setSuccess(`Deleted ${deleteGym.name}.`);
           </button>
         </div>
       ) : (
-        <div className="admin-surface">
+        <>
+        <div className="space-y-3 lg:hidden">
+          {filtered.map((gym) => (
+            <div key={gym.id} className="admin-surface p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-zinc-900">{gym.name}</p>
+                  <p className="text-xs text-zinc-500">{gym.gym_id} · {gym.owner_name || 'No owner'}</p>
+                </div>
+                <StatusPill status={gym.status} />
+              </div>
+              <p className="mt-2 text-xs text-zinc-500">{gym.memberCount} members · {gym.admin_username || 'no username'}</p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <ActionButton icon={Eye} label="View" full onClick={() => openView(gym)} />
+                <ActionButton icon={Pencil} label="Edit" full onClick={() => openEdit(gym)} />
+                {gym.status === 'active' ? (
+                  <ActionButton icon={ShieldOff} label="Suspend" full onClick={() => toggleGymStatus(gym, 'suspended')} />
+                ) : (
+                  <ActionButton icon={ShieldCheck} label="Activate" full onClick={() => toggleGymStatus(gym, 'active')} />
+                )}
+                <ActionButton icon={Trash2} label="Delete" danger full onClick={() => setDeleteGym(gym)} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="admin-surface hidden lg:block">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -540,6 +566,7 @@ setSuccess(`Deleted ${deleteGym.name}.`);
             </table>
           </div>
         </div>
+        </>
       )}
 
       <AnimatePresence>
@@ -802,17 +829,21 @@ function ActionButton({
   icon: Icon,
   label,
   danger,
+  full,
   onClick,
 }: {
   icon: ComponentType<{ className?: string }>;
   label: string;
   danger?: boolean;
+  full?: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       onClick={onClick}
       className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-xs font-medium ${
+        full ? 'w-full justify-center' : ''
+      } ${
         danger
           ? 'border-red-200 text-red-700 hover:bg-red-50'
           : 'border-zinc-200 text-zinc-700 hover:bg-zinc-50'

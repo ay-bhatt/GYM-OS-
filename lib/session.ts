@@ -19,6 +19,9 @@ export async function getSession(): Promise<SessionUser | null> {
       .maybeSingle();
 
     if (currentUser) {
+      if (currentUser.status && currentUser.status !== 'active') {
+        return null;
+      }
       return {
         userId: currentUser.id,
         username: currentUser.username,

@@ -19,6 +19,7 @@
 import { createServerClient } from '@/lib/supabase-server';
 import { MusicProvider, MusicTrack, MusicCategory, TrackStatus } from './provider';
 import { AudiusMusicProvider } from './audius-provider';
+import { PixabayMusicProvider, rewritePixabayStreamUrl } from './pixabay-provider';
 import { FALLBACK_CATALOG, MUSIC_CATEGORIES, DEFAULT_CATEGORY, isTrackGymSafe } from './catalog';
 import { MUSIC_PROVIDER } from './config';
 
@@ -28,10 +29,11 @@ export type MusicServiceOptions = {
 };
 
 function createProvider(): MusicProvider {
-  const id = (MUSIC_PROVIDER || 'audius').toLowerCase();
+  const id = (MUSIC_PROVIDER || 'pixabay').toLowerCase();
+  if (id === 'pixabay') return new PixabayMusicProvider();
   if (id === 'audius') return new AudiusMusicProvider();
-  console.warn(`[music] unknown MUSIC_PROVIDER="${id}", falling back to audius`);
-  return new AudiusMusicProvider();
+  console.warn(`[music] unknown MUSIC_PROVIDER="${id}", falling back to pixabay`);
+  return new PixabayMusicProvider();
 }
 
 export class MusicService {
@@ -55,26 +57,47 @@ export class MusicService {
 
   /** Approved, enriched tracks for the global catalog. */
   async getApprovedTracks(opts: MusicServiceOptions = {}): Promise<MusicTrack[]> {
-    const fromDb = await this.fetchApprovedFromDb(opts.category);
-    let source: MusicTrack[];
-    if (fromDb && fromDb.length > 0) {
-      source = fromDb.filter(isTrackGymSafe);
-    } else {
-      source = FALLBACK_CATALOG.filter(isTrackGymSafe);
+    let source: MusicTrack[] = [];
+
+    if (this.provider.name === 'pixabay') {
+      try {
+        source = (await this.provider.getFeaturedTracks()).filter(isTrackGymSafe);
+      } catch (error) {
+        console.warn('[music] pixabay featured catalog failed', error);
+      }
     }
+
+    if (source.length === 0) {
+      const fromDb = await this.fetchApprovedFromDb(opts.category);
+      if (fromDb && fromDb.length > 0) {
+        source = fromDb.filter(isTrackGymSafe);
+      } else {
+        source = FALLBACK_CATALOG.filter(isTrackGymSafe);
+      }
+    }
+
     if (opts.category) {
       source = source.filter((t) => t.category === opts.category);
     }
-    source.sort((a, b) => {
-      const cat = a.category.localeCompare(b.category);
-      return cat !== 0 ? cat : a.artist.localeCompare(b.artist);
-    });
-    return Promise.all(source.map((t) => this.enrichTrack(t)));
+
+    const enriched = await Promise.all(source.map((t) => this.enrichTrack(t)));
+    return enriched.map(rewritePixabayStreamUrl);
   }
 
   async getTrackById(id: string): Promise<MusicTrack | null> {
     const fromDb = await this.fetchTrackFromDb(id);
-    const track = fromDb ?? FALLBACK_CATALOG.find((t) => t.id === id || t.providerTrackId === id) ?? null;
+    if (fromDb) return this.enrichTrack(fromDb);
+
+    if (this.provider.name === 'pixabay') {
+      const featured = await this.provider.getFeaturedTracks();
+      const match = featured.find((t) => t.id === id || t.providerTrackId === id || `pixabay-${t.providerTrackId}` === id);
+      if (match) return this.enrichTrack(match);
+      const providerId = id.startsWith('pixabay-') ? id.slice('pixabay-'.length) : id;
+      const fromProvider = await this.provider.getTrack(providerId);
+      if (fromProvider) return this.enrichTrack(fromProvider);
+    }
+
+    const track = FALLBACK_CATALOG.find((t) => t.id === id || t.providerTrackId === id) ?? null;
     return track ? this.enrichTrack(track) : null;
   }
 

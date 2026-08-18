@@ -58,7 +58,7 @@ export default function AttendancePage() {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className="p-6 lg:p-8"
+      className="px-4 py-4 lg:p-8"
     >
       <div className="mb-6">
         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-500">Floor</p>

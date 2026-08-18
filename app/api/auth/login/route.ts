@@ -3,8 +3,31 @@ import bcrypt from 'bcryptjs';
 import { createServerClient } from '@/lib/supabase-server';
 import { createSessionToken, TOKEN_COOKIE_NAME, TOKEN_COOKIE_MAX_AGE } from '@/lib/auth';
 
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+const LOGIN_WINDOW_MS = 10 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 8;
+
+function clientKey(request: NextRequest) {
+  return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown';
+}
+
+function tooManyAttempts(key: string) {
+  const now = Date.now();
+  const current = loginAttempts.get(key);
+  if (!current || current.resetAt < now) {
+    loginAttempts.set(key, { count: 1, resetAt: now + LOGIN_WINDOW_MS });
+    return false;
+  }
+  current.count += 1;
+  return current.count > LOGIN_MAX_ATTEMPTS;
+}
+
 export async function POST(request: NextRequest) {
   try {
+    if (tooManyAttempts(clientKey(request))) {
+      return NextResponse.json({ error: 'Too many login attempts. Try again in a few minutes.' }, { status: 429 });
+    }
+
     const body = await request.json();
     const { username, password } = body;
 
@@ -68,10 +91,9 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'An error occurred during login. Please try again.';
+  } catch {
     return NextResponse.json(
-      { error: message },
+      { error: 'An error occurred during login. Please try again.' },
       { status: 500 }
     );
   }

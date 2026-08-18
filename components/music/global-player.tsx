@@ -28,7 +28,7 @@ import { MusicPlayer } from './music-player';
 import type { MusicTrack } from '@/lib/music/provider';
 
 const CACHE_KEY = 'forggym-music-catalog';
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL_MS = 2 * 60 * 1000;
 
 export function GlobalPlayer() {
   const [mounted, setMounted] = useState(false);
@@ -53,30 +53,35 @@ export function GlobalPlayer() {
     }
     if (cached && cached.length) setTracks(cached);
 
-    // 2) Fetch the approved catalog fresh from the server (metadata only).
     const controller = new AbortController();
-    fetch('/api/music/tracks', { signal: controller.signal })
-      .then(async (res) => {
-        if (!res.ok) return [];
-        const json: { data?: MusicTrack[] } = await res.json().catch(() => ({ data: [] }));
-        return json.data || [];
-      })
-      .then((fresh) => {
-        setTracks(fresh);
-        if (fresh.length) {
-          try {
-            localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), tracks: fresh }));
-          } catch {
-            /* ignore storage errors */
+    const load = () =>
+      fetch('/api/music/tracks', { signal: controller.signal })
+        .then(async (res) => {
+          if (!res.ok) return [];
+          const json: { data?: MusicTrack[] } = await res.json().catch(() => ({ data: [] }));
+          return json.data || [];
+        })
+        .then((fresh) => {
+          setTracks(fresh);
+          if (fresh.length) {
+            try {
+              localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), tracks: fresh }));
+            } catch {
+              /* ignore storage errors */
+            }
           }
-        }
-      })
-      .catch(() => {
-        // Keep whatever we had (cache or empty).
-      })
-      .finally(() => setLoading(false));
+        })
+        .catch(() => {
+          // Keep whatever we had (cache or empty).
+        })
+        .finally(() => setLoading(false));
 
-    return () => controller.abort();
+    load();
+    const refresh = window.setInterval(load, 15 * 60 * 1000);
+    return () => {
+      controller.abort();
+      window.clearInterval(refresh);
+    };
   }, []);
 
   // The hook owns the audio element + playback state. It is stable across

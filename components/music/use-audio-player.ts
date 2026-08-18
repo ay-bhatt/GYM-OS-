@@ -3,7 +3,7 @@
 /**
  * useAudioPlayer - weighted-shuffle HTML5 Audio controller.
  * Playback STATE is local to this browser. History in localStorage.
- * Audio streams from provider CDN. ForgeGym never proxies bytes.
+ * After the user taps Play, tracks continue automatically.
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -12,7 +12,7 @@ import { ShuffleEngine, deserializeState, serializeState } from '@/lib/music/shu
 
 const STORAGE_KEY = 'forggym-music-position';
 const HISTORY_KEY = 'forggym_music_history_v2';
-const MAX_FAILURES = 3;
+const MAX_FAILURES = 6;
 
 export interface AudioPlayerControls {
   current: MusicTrack | null;
@@ -31,6 +31,15 @@ export interface AudioPlayerControls {
   setMuted: (muted: boolean) => void;
 }
 
+function sameSrc(audio: HTMLAudioElement, url: string) {
+  if (!url) return false;
+  try {
+    return audio.src === new URL(url, window.location.origin).href;
+  } catch {
+    return audio.src === url;
+  }
+}
+
 export function useAudioPlayer(tracks: MusicTrack[]): AudioPlayerControls {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -44,27 +53,84 @@ export function useAudioPlayer(tracks: MusicTrack[]): AudioPlayerControls {
   const wantPlayingRef = useRef(false);
   const tracksRef = useRef(tracks);
   tracksRef.current = tracks;
-
   const engineRef = useRef<ShuffleEngine | null>(null);
-  // Build the shuffle engine when the track list changes.
+
   useEffect(() => {
-    if (!tracks.length) { engineRef.current = null; return; }
-    let history: string[] = [];
-    if (typeof window !== "undefined") {
-      try {
-        history = deserializeState(localStorage.getItem(HISTORY_KEY) || "{}").history;
-      } catch { history = []; }
+    const audio = new Audio();
+    audio.preload = 'auto';
+    audio.setAttribute('playsinline', 'true');
+    audioRef.current = audio;
+
+    const onTimeUpdate = () => setCurrentTime(audio.currentTime);
+    const onDurationChange = () => setDuration(isFinite(audio.duration) ? audio.duration : 0);
+    const handleEnded = () => {
+      failureCountRef.current = 0;
+      engineRef.current?.advance();
+      setTick((value) => value + 1);
+    };
+    const handleError = () => {
+      failureCountRef.current += 1;
+      if (failureCountRef.current > MAX_FAILURES || tracksRef.current.length <= 1) {
+        setError('Music unavailable');
+        wantPlayingRef.current = false;
+        setIsPlaying(false);
+        return;
+      }
+      engineRef.current?.advance();
+      setTick((value) => value + 1);
+    };
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => {
+      if (!wantPlayingRef.current) setIsPlaying(false);
+    };
+
+    audio.addEventListener('timeupdate', onTimeUpdate);
+    audio.addEventListener('durationchange', onDurationChange);
+    audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('error', handleError);
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
+
+    return () => {
+      audio.pause();
+      audio.removeEventListener('timeupdate', onTimeUpdate);
+      audio.removeEventListener('durationchange', onDurationChange);
+      audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('error', handleError);
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('pause', handlePause);
+      audioRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!tracks.length) {
+      engineRef.current = null;
+      return;
     }
-    engineRef.current = new ShuffleEngine(tracks, { history });
+    let history: string[] = [];
+    if (typeof window !== 'undefined') {
+      try {
+        history = deserializeState(localStorage.getItem(HISTORY_KEY) || '{}').history;
+      } catch {
+        history = [];
+      }
+    }
+    if (!engineRef.current) {
+      engineRef.current = new ShuffleEngine(tracks, { history });
+      setTick((value) => value + 1);
+      return;
+    }
+    engineRef.current.setTracks(tracks);
+    setTick((value) => value + 1);
   }, [tracks]);
 
-  // Persist shuffle history on track change.
   useEffect(() => {
-    if (!engineRef.current) return;
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem(HISTORY_KEY, serializeState(engineRef.current.getState()));
-      } catch {}
+    if (!engineRef.current || typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(HISTORY_KEY, serializeState(engineRef.current.getState()));
+    } catch {
+      /* ignore */
     }
   }, [tick]);
 
@@ -72,105 +138,62 @@ export function useAudioPlayer(tracks: MusicTrack[]): AudioPlayerControls {
   const hasTracks = tracks.length > 0;
   const progress = duration > 0 ? currentTime / duration : 0;
 
-  // Restore last-played track from localStorage (does not auto-play).
-  useEffect(() => {
-    if (!hasTracks || typeof window === "undefined") return;
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const saved: { currentTrackId?: string } = JSON.parse(raw);
-      if (!saved.currentTrackId || !engineRef.current) return;
-      const t = tracksRef.current;
-      const idx = t.findIndex(
-        (tr) => tr.id === saved.currentTrackId || tr.providerTrackId === saved.currentTrackId
-      );
-      if (idx >= 0 && engineRef.current) {
-        engineRef.current = new ShuffleEngine(t, engineRef.current.getState());
-        setTick((v) => v + 1);
-      }
-    } catch {}
-  }, [hasTracks]);
-
-  // src effect: update audio.src when the current track changes.
-  useEffect(() => {
-    let audio = audioRef.current;
-    if (!audio) { audioRef.current = new Audio(); return; }
-    if (current?.streamUrl && audio.src !== current.streamUrl) {
-      audio.src = current.streamUrl || "";
-      audio.load();
-      setCurrentTime(0);
-      setDuration(0);
-      failureCountRef.current = 0;
-      setError(null);
-    }
-    return undefined;
-  }, [tick, current]);
-
-  // Wire up events (attached once).
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio) return;
-
-    const onTimeUpdate = () => setCurrentTime(audio.currentTime);
-    const onDurationChange = () => setDuration(isFinite(audio.duration) ? audio.duration : 0);
-    const onProgress = () => setCurrentTime(audio.currentTime);
-
-    const handleEnded = () => {
-      failureCountRef.current = 0;
-      engineRef.current?.advance();
-      setTick((v) => v + 1);
-    };
-
-    const handleError = () => {
-      failureCountRef.current += 1;
-      if (failureCountRef.current > MAX_FAILURES || (tracksRef.current.length <= 1)) {
-        setError("Music unavailable");
-        wantPlayingRef.current = false;
-        setIsPlaying(false);
-        return;
+    if (!audio || !current?.streamUrl) return;
+    if (sameSrc(audio, current.streamUrl)) {
+      if (wantPlayingRef.current && audio.paused) {
+        void audio.play().catch(() => setIsPlaying(false));
       }
-      engineRef.current?.advance();
-      setTick((v) => v + 1);
-    };
+      return;
+    }
 
-    audio.addEventListener("timeupdate", onTimeUpdate);
-    audio.addEventListener("durationchange", onDurationChange);
-    audio.addEventListener("progress", onProgress);
-    audio.addEventListener("ended", handleEnded);
-    audio.addEventListener("error", handleError);
+    audio.src = current.streamUrl;
+    audio.load();
+    setCurrentTime(0);
+    setDuration(0);
+    setError(null);
 
-    return () => {
-      audio.removeEventListener("timeupdate", onTimeUpdate);
-      audio.removeEventListener("durationchange", onDurationChange);
-      audio.removeEventListener("progress", onProgress);
-      audio.removeEventListener("ended", handleEnded);
-      audio.removeEventListener("error", handleError);
-    };
-  }, []);
+    if (wantPlayingRef.current) {
+      void audio
+        .play()
+        .then(() => {
+          setIsPlaying(true);
+          failureCountRef.current = 0;
+        })
+        .catch(() => {
+          setIsPlaying(false);
+        });
+    }
+  }, [tick, current]);
 
   const play = useCallback(async () => {
     const audio = audioRef.current;
-    if (!audio || !current) { setError("Music unavailable"); return; }
-    if (!audio.src || audio.src !== current.streamUrl) {
-      audio.src = current.streamUrl || "";
+    if (!audio || !current?.streamUrl) {
+      setError('Music unavailable');
+      return;
     }
+    if (!sameSrc(audio, current.streamUrl)) {
+      audio.src = current.streamUrl;
+      audio.load();
+    }
+    wantPlayingRef.current = true;
     try {
       await audio.play();
       setIsPlaying(true);
       setError(null);
       failureCountRef.current = 0;
-      wantPlayingRef.current = true;
       audio.muted = isMuted;
     } catch {
       wantPlayingRef.current = false;
       setIsPlaying(false);
-      setError("Please tap Play to start music");
+      setError('Tap play to start music');
     }
   }, [current, isMuted]);
 
   const pause = useCallback(() => {
-    if (audioRef.current) audioRef.current.pause();
     wantPlayingRef.current = false;
+    audioRef.current?.pause();
     setIsPlaying(false);
   }, []);
 
@@ -181,17 +204,23 @@ export function useAudioPlayer(tracks: MusicTrack[]): AudioPlayerControls {
     }
   }, []);
 
+  const persistCurrent = () => {
+    if (typeof window === 'undefined' || !engineRef.current?.current) return;
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ currentTrackId: engineRef.current.current.providerTrackId })
+      );
+    } catch {
+      /* ignore */
+    }
+  };
+
   const next = useCallback(() => {
     if (!hasTracks || !engineRef.current) return;
     engineRef.current.advance();
-    setTick((v) => v + 1);
-    if (typeof window !== "undefined" && engineRef.current.current) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          currentTrackId: engineRef.current.current.providerTrackId,
-        }));
-      } catch {}
-    }
+    persistCurrent();
+    setTick((value) => value + 1);
   }, [hasTracks]);
 
   const prev = useCallback(() => {
@@ -203,7 +232,8 @@ export function useAudioPlayer(tracks: MusicTrack[]): AudioPlayerControls {
       return;
     }
     engineRef.current.previous();
-    setTick((v) => v + 1);
+    persistCurrent();
+    setTick((value) => value + 1);
   }, [hasTracks]);
 
   const setMuted = useCallback((muted: boolean) => {
@@ -212,7 +242,19 @@ export function useAudioPlayer(tracks: MusicTrack[]): AudioPlayerControls {
   }, []);
 
   return {
-    current, isPlaying, currentTime, duration, progress,
-    hasTracks, isMuted, error, play, pause, next, prev, seek, setMuted,
+    current,
+    isPlaying,
+    currentTime,
+    duration,
+    progress,
+    hasTracks,
+    isMuted,
+    error,
+    play,
+    pause,
+    next,
+    prev,
+    seek,
+    setMuted,
   };
 }

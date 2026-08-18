@@ -150,7 +150,7 @@ export function HomeLanding() {
         <button
           type="button"
           onClick={openLogin}
-          className="absolute right-5 top-20 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full border border-zinc-200/80 bg-white text-zinc-800 shadow-[0_8px_24px_rgba(15,23,42,0.08)] ring-4 ring-white/70 transition-all hover:-translate-y-0.5 hover:border-sky-200 hover:text-sky-700 hover:shadow-[0_12px_28px_rgba(14,165,233,0.18)] lg:right-8 lg:top-24"
+          className="fixed right-4 top-[4.25rem] z-[101] inline-flex h-11 w-11 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-800 shadow-lg sm:absolute sm:right-5 sm:top-4 sm:z-20 lg:right-8 lg:top-6"
           title="Sign in"
           aria-label="Sign in"
         >

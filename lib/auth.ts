@@ -1,6 +1,14 @@
 import { SignJWT, jwtVerify } from 'jose';
 
-const AUTH_SECRET = process.env.AUTH_SECRET || process.env.JWT_SECRET || 'dev-secret-change-in-production';
+function getAuthSecret() {
+  const secret = process.env.AUTH_SECRET || process.env.JWT_SECRET;
+  if (process.env.NODE_ENV === 'production' && (!secret || secret === 'dev-secret-change-in-production')) {
+    throw new Error('AUTH_SECRET must be set to a strong value in production');
+  }
+  return secret || 'dev-secret-change-in-production';
+}
+
+const AUTH_SECRET = getAuthSecret();
 const TOKEN_NAME = 'gym_session';
 const TOKEN_MAX_AGE = 60 * 60 * 24; // 24 hours
 

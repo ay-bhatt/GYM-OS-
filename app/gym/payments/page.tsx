@@ -183,7 +183,7 @@ export default function PaymentsPage() {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className="p-6 lg:p-8"
+      className="px-4 py-4 lg:p-8"
     >
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">

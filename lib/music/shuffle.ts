@@ -73,6 +73,21 @@ export class ShuffleEngine {
     return { history: [...this.state.history] };
   }
 
+  /** Refresh the catalog without dropping the current song. */
+  setTracks(tracks: MusicTrack[]) {
+    this.tracks = tracks || [];
+    const currentId = this.queue[0]?.id;
+    if (currentId && this.tracks.some((track) => track.id === currentId)) {
+      this.queue = this.queue
+        .map((queued) => this.tracks.find((track) => track.id === queued.id))
+        .filter((track): track is MusicTrack => Boolean(track));
+      if (this.queue.length === 0) this.buildQueue();
+      return;
+    }
+    this.queue = [];
+    this.buildQueue();
+  }
+
   private buildQueue(): void {
     const available = this.tracks.filter(
       (t) => !this.state.history.includes(t.providerTrackId)

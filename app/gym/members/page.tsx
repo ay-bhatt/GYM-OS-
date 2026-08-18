@@ -230,18 +230,18 @@ export default function MembersPage() {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className="p-6 lg:p-8"
+      className="px-4 py-4 lg:p-8"
     >
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between gap-3">
-        <div>
+      <div className="mb-6 flex items-start justify-between gap-3">
+        <div className="min-w-0">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-500">Roster</p>
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Members</h1>
           <p className="mt-1 text-sm text-zinc-500">Green = fee paid. Red = due. Star = membership plan.</p>
         </div>
         <button
           onClick={openAddModal}
-          className="inline-flex items-center gap-2 rounded-2xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-200"
+          className="inline-flex flex-shrink-0 items-center gap-2 rounded-2xl bg-violet-600 px-3 py-2 text-sm font-medium text-white shadow-lg shadow-violet-200 sm:px-4 sm:py-2.5"
         >
           <Plus className="h-4 w-4" />
           Add
