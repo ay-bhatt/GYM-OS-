@@ -400,16 +400,16 @@ setSuccess(`Deleted ${deleteGym.name}.`);
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center p-8">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-900" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-sky-500" />
       </div>
     );
   }
 
   return (
-    <div className="px-4 py-4 lg:p-8">
-      <div className="mb-6 flex items-start justify-between gap-3">
+    <div className="p-5 sm:p-6 lg:p-8">
+      <div className="mb-8 flex items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-sky-600">Network</p>
+          <p className="admin-kicker">Network</p>
           <h1 className="admin-page-title">Gyms</h1>
           <p className="admin-page-sub">Manage every gym on the platform.</p>
         </div>
@@ -479,23 +479,23 @@ setSuccess(`Deleted ${deleteGym.name}.`);
 
         <div className="admin-surface hidden lg:block">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="admin-table w-full">
               <thead>
-                <tr className="border-b border-zinc-200 bg-zinc-50">
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Gym Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Gym ID</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Owner</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Username</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Password</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Members</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Created Date</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500">Actions</th>
+                <tr className="border-b border-zinc-100 bg-zinc-50/90">
+                  <th className="px-4 py-3 text-left">Gym name</th>
+                  <th className="px-4 py-3 text-left">Gym ID</th>
+                  <th className="px-4 py-3 text-left">Owner</th>
+                  <th className="px-4 py-3 text-left">Username</th>
+                  <th className="px-4 py-3 text-left">Password</th>
+                  <th className="px-4 py-3 text-left">Members</th>
+                  <th className="px-4 py-3 text-left">Status</th>
+                  <th className="px-4 py-3 text-left">Created</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((gym) => (
-                  <tr key={gym.id} className="border-b border-zinc-100 last:border-0">
+                  <tr key={gym.id} className="border-b border-zinc-100 last:border-0 hover:bg-sky-50/40">
                     <td className="px-4 py-3 text-sm font-medium text-zinc-900">{gym.name}</td>
                     <td className="px-4 py-3 text-sm text-zinc-600">{gym.gym_id}</td>
                     <td className="px-4 py-3 text-sm text-zinc-600">{gym.owner_name || '—'}</td>

@@ -79,26 +79,77 @@
 }
 
 @layer components {
+  .admin-canvas {
+    background-color: #ffffff;
+  }
+  .admin-kicker {
+    @apply text-[11px] font-semibold uppercase tracking-[0.22em] text-[#1e3a5f];
+  }
   .admin-page-title {
-    @apply text-2xl font-semibold tracking-tight text-zinc-900;
+    @apply mt-1 text-[1.75rem] font-semibold leading-tight tracking-tight text-zinc-950;
   }
   .admin-page-sub {
-    @apply mt-1 text-sm text-zinc-500;
+    @apply mt-1.5 max-w-2xl text-sm leading-relaxed text-zinc-500;
   }
   .admin-primary-btn {
-    @apply inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-zinc-800 hover:shadow-md;
+    @apply inline-flex items-center gap-2 rounded-xl bg-black px-4 py-2.5 text-sm font-medium text-white shadow-[0_8px_20px_rgba(0,0,0,0.18)] transition hover:bg-[#0b1d36];
   }
   .admin-secondary-btn {
-    @apply inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50;
+    @apply inline-flex items-center gap-2 rounded-xl border border-white/10 bg-[#0b1d36] px-3.5 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-[#122a4a];
   }
   .admin-surface {
-    @apply overflow-hidden rounded-2xl border border-zinc-200/80 bg-white/80 shadow-[0_10px_30px_rgba(15,23,42,0.05)] backdrop-blur-sm;
+    @apply overflow-hidden rounded-2xl border border-white/10 text-zinc-100 shadow-[0_16px_40px_rgba(8,16,32,0.16)];
+    background: linear-gradient(180deg, #12263f 0%, #0a1628 100%);
   }
   .admin-stat {
-    @apply rounded-2xl border border-zinc-200/80 bg-white/80 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] backdrop-blur-sm;
+    @apply rounded-2xl border border-white/10 p-4 text-white shadow-[0_12px_28px_rgba(8,16,32,0.14)] transition duration-200 hover:-translate-y-0.5;
+    background: linear-gradient(180deg, #163154 0%, #0b1d36 100%);
   }
   .admin-input {
-    @apply w-full rounded-xl border border-zinc-200 bg-white py-2.5 pl-10 pr-3 text-sm text-zinc-900 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/20;
+    @apply w-full rounded-xl border bg-[#071320] py-2.5 pl-10 pr-3 text-sm text-white outline-none transition placeholder:text-zinc-400;
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+  .admin-input:focus {
+    border-color: #3b6ea8;
+    box-shadow: 0 0 0 4px rgba(30, 58, 95, 0.4);
+  }
+  .admin-table th {
+    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400;
+  }
+  .admin-surface .text-zinc-950,
+  .admin-surface .text-zinc-900,
+  .admin-surface .text-zinc-800,
+  .admin-stat .text-zinc-950,
+  .admin-stat .text-zinc-900 {
+    color: #f8fafc;
+  }
+  .admin-surface .text-zinc-700,
+  .admin-surface .text-zinc-600,
+  .admin-stat .text-zinc-700 {
+    color: #cbd5e1;
+  }
+  .admin-surface .text-zinc-500,
+  .admin-surface .text-zinc-400,
+  .admin-stat .text-zinc-500,
+  .admin-stat .text-zinc-400 {
+    color: #94a3b8;
+  }
+  .admin-surface .border-zinc-100,
+  .admin-surface .border-zinc-200,
+  .admin-surface .border-zinc-200\/90 {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  .admin-surface .bg-zinc-50,
+  .admin-surface .bg-zinc-50\/80,
+  .admin-surface .bg-zinc-50\/90,
+  .admin-surface .bg-zinc-100,
+  .admin-surface .bg-white {
+    background-color: rgba(255, 255, 255, 0.06);
+  }
+  .admin-surface .hover\:bg-zinc-50:hover,
+  .admin-surface .hover\:bg-sky-50\/40:hover,
+  .admin-surface .hover\:bg-zinc-100:hover {
+    background-color: rgba(255, 255, 255, 0.08);
   }
 }
 
@@ -117,6 +168,25 @@
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background-color: hsl(var(--muted-foreground) / 0.3);
     border-radius: 3px;
+  }
+  .music-table-h-scroll {
+    scrollbar-width: auto;
+    scrollbar-color: #a1a1aa #f4f4f5;
+  }
+  .music-table-h-scroll::-webkit-scrollbar {
+    height: 14px;
+    width: 14px;
+  }
+  .music-table-h-scroll::-webkit-scrollbar-track {
+    background: #f4f4f5;
+  }
+  .music-table-h-scroll::-webkit-scrollbar-thumb {
+    background: #a1a1aa;
+    border-radius: 8px;
+    border: 3px solid #f4f4f5;
+  }
+  .music-table-h-scroll::-webkit-scrollbar-thumb:hover {
+    background: #71717a;
   }
   .text-balance {
     text-wrap: balance;

@@ -112,23 +112,22 @@ export default function GymDashboard() {
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center p-8">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-900" />
       </div>
     );
   }
 
   const highlightCards = [
-    { label: 'On the floor', value: stats?.insideNow ?? 0, icon: UserCheck, tone: 'from-violet-500 to-indigo-500' },
-    { label: 'Left today', value: stats?.leftToday ?? 0, icon: LogOut, tone: 'from-orange-400 to-amber-500' },
-    { label: 'Total members', value: stats?.totalMembers ?? 0, icon: Users, tone: 'from-sky-400 to-cyan-500' },
-    { label: 'Unpaid / expired', value: stats?.expiredMembers ?? 0, icon: UserX, tone: 'from-rose-400 to-pink-500' },
+    { label: 'On the floor', value: stats?.insideNow ?? 0, icon: UserCheck },
+    { label: 'Left today', value: stats?.leftToday ?? 0, icon: LogOut },
+    { label: 'Total members', value: stats?.totalMembers ?? 0, icon: Users },
+    { label: 'Unpaid / expired', value: stats?.expiredMembers ?? 0, icon: UserX },
     {
       label: 'Revenue',
       value: `$${(stats?.totalRevenue ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`,
       icon: DollarSign,
-      tone: 'from-emerald-400 to-teal-500',
     },
-    { label: "Today's visits", value: stats?.todayAttendance ?? 0, icon: Calendar, tone: 'from-fuchsia-400 to-violet-500' },
+    { label: "Today's visits", value: stats?.todayAttendance ?? 0, icon: Calendar },
   ];
 
   const floorMembers = floorTab === 'inside' ? inside : left;
@@ -137,13 +136,13 @@ export default function GymDashboard() {
     <div className="px-4 py-5 lg:p-8">
       <div className="mb-5 flex items-end justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-500">Live desk</p>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Who is in the gym</h1>
-          <p className="mt-1 text-sm text-zinc-500">Scan a member QR to check them in or out.</p>
+          <p className="admin-kicker">Live desk</p>
+          <h1 className="admin-page-title">Who is in the gym</h1>
+          <p className="admin-page-sub">Scan a member QR to check them in or out.</p>
         </div>
         <Link
           href="/gym/attendance"
-          className="hidden items-center gap-2 rounded-2xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-200 lg:inline-flex"
+          className="admin-primary-btn hidden lg:inline-flex"
         >
           <QrCode className="h-4 w-4" />
           Scan
@@ -159,30 +158,34 @@ export default function GymDashboard() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.04 }}
-              className={`rounded-3xl bg-gradient-to-br ${card.tone} p-4 text-white shadow-md`}
+              className="admin-stat"
             >
-              <Icon className="mb-4 h-5 w-5 text-white/80" />
-              <p className="text-2xl font-semibold tracking-tight">{card.value}</p>
-              <p className="mt-1 text-xs text-white/80">{card.label}</p>
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-400">{card.label}</p>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/30 text-white">
+                  <Icon className="h-4 w-4" />
+                </div>
+              </div>
+              <p className="mt-4 text-[1.65rem] font-semibold tracking-tight text-white">{card.value}</p>
             </motion.div>
           );
         })}
       </div>
 
-      <div className="mt-6 rounded-[28px] bg-white p-4 shadow-sm shadow-violet-100">
-        <div className="mb-4 flex rounded-2xl bg-violet-50 p-1">
+      <div className="admin-surface mt-6 p-4">
+        <div className="mb-4 flex rounded-xl bg-black/25 p-1">
           <button
             onClick={() => setFloorTab('inside')}
-            className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium ${
-              floorTab === 'inside' ? 'bg-white text-violet-700 shadow-sm' : 'text-zinc-500'
+            className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium ${
+              floorTab === 'inside' ? 'bg-[#1e3a8a] text-white shadow-sm' : 'text-slate-400'
             }`}
           >
             Inside now ({inside.length})
           </button>
           <button
             onClick={() => setFloorTab('left')}
-            className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium ${
-              floorTab === 'left' ? 'bg-white text-violet-700 shadow-sm' : 'text-zinc-500'
+            className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium ${
+              floorTab === 'left' ? 'bg-[#1e3a8a] text-white shadow-sm' : 'text-slate-400'
             }`}
           >
             Left today ({left.length})
@@ -190,7 +193,7 @@ export default function GymDashboard() {
         </div>
 
         {floorMembers.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-violet-100 py-10 text-center text-sm text-zinc-400">
+          <div className="rounded-xl border border-dashed border-zinc-200 py-10 text-center text-sm text-zinc-400">
             {floorTab === 'inside' ? 'No one is checked in right now.' : 'No check-outs yet today.'}
           </div>
         ) : (
@@ -209,7 +212,7 @@ export default function GymDashboard() {
                 {floorTab === 'inside' && (
                   <button
                     onClick={() => checkoutMember(member.attendanceId)}
-                    className="w-full rounded-2xl border border-violet-100 bg-violet-50 py-2 text-xs font-medium text-violet-700"
+                    className="w-full rounded-xl border border-white/15 bg-black/30 py-2 text-xs font-medium text-white hover:bg-black/50"
                   >
                     Check out
                   </button>
@@ -221,70 +224,70 @@ export default function GymDashboard() {
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <div className="rounded-[28px] bg-white p-5 shadow-sm shadow-violet-100">
+        <div className="admin-surface p-5">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-zinc-900">Attendance</h2>
-            <TrendingUp className="h-4 w-4 text-violet-400" />
+            <h2 className="text-sm font-semibold text-white">Attendance</h2>
+            <TrendingUp className="h-4 w-4 text-slate-400" />
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={attendanceData}>
               <defs>
                 <linearGradient id="attendanceGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#7c5cff" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#7c5cff" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#93c5fd" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#93c5fd" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" vertical={false} />
-              <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#71717a' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#71717a' }} axisLine={false} tickLine={false} allowDecimals={false} />
-              <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #ede9fe', fontSize: '12px' }} />
-              <Area type="monotone" dataKey="count" stroke="#7c5cff" strokeWidth={2} fill="url(#attendanceGradient)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e3a5f" vertical={false} />
+              <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} allowDecimals={false} />
+              <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #1e3a5f', background: '#0b1d36', color: '#f8fafc', fontSize: '12px' }} />
+              <Area type="monotone" dataKey="count" stroke="#93c5fd" strokeWidth={2} fill="url(#attendanceGradient)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
-        <div className="rounded-[28px] bg-white p-5 shadow-sm shadow-violet-100">
+        <div className="admin-surface p-5">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-zinc-900">Revenue</h2>
-            <DollarSign className="h-4 w-4 text-violet-400" />
+            <h2 className="text-sm font-semibold text-white">Revenue</h2>
+            <DollarSign className="h-4 w-4 text-slate-400" />
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={revenueData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" vertical={false} />
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#71717a' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#71717a' }} axisLine={false} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e3a5f" vertical={false} />
+              <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
               <Tooltip
-                contentStyle={{ borderRadius: '12px', border: '1px solid #ede9fe', fontSize: '12px' }}
+                contentStyle={{ borderRadius: '12px', border: '1px solid #1e3a5f', background: '#0b1d36', color: '#f8fafc', fontSize: '12px' }}
                 formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
               />
-              <Bar dataKey="revenue" fill="#7c5cff" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="revenue" fill="#1e3a8a" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      <div className="mt-6 rounded-[28px] bg-white p-5 shadow-sm shadow-violet-100">
-        <h2 className="mb-3 text-sm font-semibold text-zinc-900">Account security</h2>
+      <div className="admin-surface mt-6 p-5">
+        <h2 className="mb-3 text-sm font-semibold text-white">Account security</h2>
         <p className="text-sm text-zinc-500">Reset your gym admin password if you need a fresh temporary login.</p>
         <button
           onClick={handleResetPassword}
           disabled={resettingPassword}
-          className="mt-4 inline-flex items-center gap-2 rounded-2xl border border-violet-100 bg-violet-50 px-4 py-2.5 text-sm font-medium text-violet-700 disabled:opacity-60"
+          className="admin-secondary-btn mt-4 disabled:opacity-60"
         >
           {resettingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
           {resettingPassword ? 'Resetting…' : 'Reset password'}
         </button>
         {tempPassword && (
-          <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+          <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4">
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs uppercase tracking-wide text-emerald-700">Temporary password</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Temporary password</p>
               <button
                 type="button"
                 onClick={() => {
                   navigator.clipboard.writeText(tempPassword);
                   setTempPassword(null);
                 }}
-                className="rounded p-1 text-emerald-700"
+                className="rounded p-1 text-zinc-600"
               >
                 <Copy className="h-3.5 w-3.5" />
               </button>

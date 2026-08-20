@@ -3,15 +3,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Dumbbell, Users, DollarSign, TrendingUp, Building2, Clock, UserX } from 'lucide-react';
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
 
 interface SuperStats {
   totalGyms: number;
@@ -57,30 +48,32 @@ export default function SuperAdminDashboard() {
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center p-8">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-900" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-900" />
       </div>
     );
   }
 
   const cards = [
-    { label: 'Total Gyms', value: stats?.totalGyms ?? 0, icon: Building2, color: 'text-zinc-900', bg: 'bg-zinc-100' },
-    { label: 'Total Members', value: stats?.totalMembers ?? 0, icon: Users, color: 'text-sky-600', bg: 'bg-sky-50' },
-    { label: 'Active', value: stats?.activeMembers ?? 0, icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50' },
-    { label: 'Expiring', value: stats?.expiringMembers ?? 0, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
-    { label: 'Expired', value: stats?.expiredMembers ?? 0, icon: UserX, color: 'text-red-600', bg: 'bg-red-50' },
-    { label: 'Total Revenue', value: `${(stats?.totalRevenue ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: DollarSign, color: 'text-zinc-900', bg: 'bg-zinc-100' },
-    { label: 'Today\'s Attendance', value: stats?.todayAttendance ?? 0, icon: Dumbbell, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'Total gyms', value: stats?.totalGyms ?? 0, icon: Building2 },
+    { label: 'Members', value: stats?.totalMembers ?? 0, icon: Users },
+    { label: 'Active', value: stats?.activeMembers ?? 0, icon: TrendingUp },
+    { label: 'Expiring', value: stats?.expiringMembers ?? 0, icon: Clock },
+    { label: 'Expired', value: stats?.expiredMembers ?? 0, icon: UserX },
+    { label: 'Revenue', value: `${(stats?.totalRevenue ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`, icon: DollarSign },
+    { label: 'Today in', value: stats?.todayAttendance ?? 0, icon: Dumbbell },
   ];
 
   return (
-    <div className="p-6 lg:p-8">
-      <div className="mb-8">
-        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-sky-600">Platform</p>
-        <h1 className="admin-page-title">Overview</h1>
-        <p className="admin-page-sub">Every gym, member, and dollar across ForgeGym.</p>
+    <div className="p-5 sm:p-6 lg:p-8">
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="admin-kicker">Platform</p>
+          <h1 className="admin-page-title">Overview</h1>
+          <p className="admin-page-sub">Every gym, member, and dollar across ForgeGym.</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-7">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-7">
         {cards.map((card, i) => {
           const Icon = card.icon;
           return (
@@ -88,14 +81,16 @@ export default function SuperAdminDashboard() {
               key={card.label}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05, duration: 0.2 }}
+              transition={{ delay: i * 0.04, duration: 0.22 }}
               className="admin-stat"
             >
-              <div className={`mb-3 flex h-9 w-9 items-center justify-center rounded-xl ${card.bg}`}>
-                <Icon className={`h-4 w-4 ${card.color}`} />
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-400">{card.label}</p>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/30 text-white">
+                  <Icon className="h-4 w-4" />
+                </div>
               </div>
-              <p className="text-2xl font-semibold tracking-tight text-zinc-900">{card.value}</p>
-              <p className="mt-0.5 text-xs text-zinc-500">{card.label}</p>
+              <p className="mt-4 text-[1.65rem] font-semibold tracking-tight text-white">{card.value}</p>
             </motion.div>
           );
         })}
@@ -104,40 +99,45 @@ export default function SuperAdminDashboard() {
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.3 }}
-        className="admin-surface mt-6 p-5"
+        transition={{ delay: 0.18, duration: 0.28 }}
+        className="admin-surface mt-6"
       >
-        <h2 className="mb-4 text-sm font-semibold text-zinc-900">All Gyms</h2>
+        <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-4">
+          <div>
+            <h2 className="text-sm font-semibold text-white">Network gyms</h2>
+            <p className="mt-0.5 text-xs text-zinc-500">Live snapshot of every location on the platform.</p>
+          </div>
+        </div>
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="admin-table w-full">
             <thead>
-              <tr className="border-b border-zinc-200">
-                <th className="pb-2 text-left text-xs font-medium text-zinc-500">Gym ID</th>
-                <th className="pb-2 text-left text-xs font-medium text-zinc-500">Name</th>
-                <th className="pb-2 text-left text-xs font-medium text-zinc-500">Owner</th>
-                <th className="pb-2 text-left text-xs font-medium text-zinc-500">Members</th>
-                <th className="pb-2 text-left text-xs font-medium text-zinc-500">Revenue</th>
-                <th className="pb-2 text-left text-xs font-medium text-zinc-500">Status</th>
+              <tr className="border-b border-zinc-100 bg-zinc-50/80">
+                <th className="px-5 py-3 text-left">Gym ID</th>
+                <th className="px-5 py-3 text-left">Name</th>
+                <th className="px-5 py-3 text-left">Owner</th>
+                <th className="px-5 py-3 text-left">Members</th>
+                <th className="px-5 py-3 text-left">Revenue</th>
+                <th className="px-5 py-3 text-left">Status</th>
               </tr>
             </thead>
             <tbody>
               {gyms.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-6 text-center text-sm text-zinc-400">No gyms found</td>
+                  <td colSpan={6} className="px-5 py-10 text-center text-sm text-zinc-400">No gyms found</td>
                 </tr>
               ) : (
                 gyms.map((g) => (
                   <tr key={g.id} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50">
-                    <td className="py-3 text-sm text-zinc-600">{g.gym_id}</td>
-                    <td className="py-3 text-sm font-medium text-zinc-900">{g.name}</td>
-                    <td className="py-3 text-sm text-zinc-600">{g.owner_name || '—'}</td>
-                    <td className="py-3 text-sm text-zinc-600">{g.member_count}</td>
-                    <td className="py-3 text-sm text-zinc-600">${g.revenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                    <td className="py-3">
-                      <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${
+                    <td className="px-5 py-3.5 text-sm text-zinc-500">{g.gym_id}</td>
+                    <td className="px-5 py-3.5 text-sm font-medium text-white">{g.name}</td>
+                    <td className="px-5 py-3.5 text-sm text-zinc-600">{g.owner_name || '—'}</td>
+                    <td className="px-5 py-3.5 text-sm text-zinc-600">{g.member_count}</td>
+                    <td className="px-5 py-3.5 text-sm tabular-nums text-zinc-600">${g.revenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td className="px-5 py-3.5">
+                      <span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold capitalize ${
                         g.status === 'active'
-                          ? 'bg-green-50 text-green-700 border-green-200'
-                          : 'bg-zinc-50 text-zinc-500 border-zinc-200'
+                          ? 'border-white/20 bg-black text-white'
+                          : 'border-white/15 bg-white/10 text-slate-300'
                       }`}>
                         {g.status}
                       </span>

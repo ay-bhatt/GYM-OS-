@@ -22,12 +22,14 @@ export default async function GymAdminLayout({ children }: { children: React.Rea
   }
 
   return (
-    <div className="flex min-h-screen bg-[#F4F1FF]">
+    <div className="flex min-h-screen bg-white">
       <Sidebar role={session.role} gymName={gymName} />
-      <main className="relative flex-1 overflow-x-hidden pt-4 pb-24 lg:pt-6 lg:pb-8">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(124,92,255,0.14),transparent_32%),radial-gradient(circle_at_top_left,rgba(255,255,255,0.85),transparent_40%)]" />
-        <div className="relative">{children}</div>
-      </main>
+      <div className="relative min-w-0 flex-1">
+        <div className="admin-canvas pointer-events-none absolute inset-0" />
+        <main className="relative flex-1 overflow-x-hidden pt-4 pb-24 lg:pt-6 lg:pb-10">
+          <div className="relative mx-auto w-full max-w-[1440px]">{children}</div>
+        </main>
+      </div>
       <GymBottomNav />
     </div>
   );
