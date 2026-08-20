@@ -194,7 +194,7 @@ export default function SuperAdminMusicPage() {
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center p-8">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-sky-500" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-blue-600" />
       </div>
     );
   }
@@ -279,12 +279,12 @@ export default function SuperAdminMusicPage() {
               onChange={(e) => setImportSearch(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleImportSearch())}
               placeholder="Search Audius (e.g. 'workout electronic')..."
-              className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-sky-500"
+              className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500"
             />
             <button
               onClick={handleImportSearch}
               disabled={importing || !importSearch.trim()}
-              className="inline-flex items-center gap-2 rounded-lg bg-sky-500 px-4 py-2 text-sm font-medium text-white hover:bg-sky-600 disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
             >
               {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
               {importing ? 'Searching…' : 'Search'}
@@ -327,7 +327,7 @@ export default function SuperAdminMusicPage() {
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as TrackStatus | 'all')}
-            className="w-full appearance-none rounded-xl border border-white/15 bg-[#071320] py-2.5 pl-10 pr-3 text-sm text-white outline-none transition focus:border-[#3b6ea8]"
+            className="w-full appearance-none rounded-xl border border-zinc-200 bg-white py-2.5 pl-10 pr-3 text-sm text-zinc-900 outline-none transition focus:border-blue-500"
           >
             {statusOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -340,13 +340,13 @@ export default function SuperAdminMusicPage() {
           value={provider}
           onChange={(e) => setProvider(e.target.value)}
           placeholder="Provider"
-          className="rounded-xl border border-white/15 bg-[#071320] px-3 py-2.5 text-sm text-white outline-none transition placeholder:text-zinc-400 focus:border-[#3b6ea8]"
+          className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-blue-500"
         />
         <input
           value={genre}
           onChange={(e) => setGenre(e.target.value)}
           placeholder="Genre"
-          className="rounded-xl border border-white/15 bg-[#071320] px-3 py-2.5 text-sm text-white outline-none transition placeholder:text-zinc-400 focus:border-[#3b6ea8]"
+          className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-blue-500"
         />
       </div>
 
@@ -355,7 +355,7 @@ export default function SuperAdminMusicPage() {
           value={country}
           onChange={(e) => setCountry(e.target.value)}
           placeholder="Country / region"
-          className="w-full max-w-xs rounded-xl border border-white/15 bg-[#071320] px-3 py-2.5 text-sm text-white outline-none transition placeholder:text-zinc-400 focus:border-[#3b6ea8]"
+          className="w-full max-w-xs rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-blue-500"
         />
         {error && <p className="text-sm text-red-600">{error}</p>}
       </div>
@@ -388,10 +388,10 @@ export default function SuperAdminMusicPage() {
                 </tr>
               ) : (
                 tracks.map((track) => (
-                  <tr key={track.id} className="border-b border-white/10 last:border-0 hover:bg-white/5">
+                  <tr key={track.id} className="border-b border-zinc-100 last:border-0 hover:bg-blue-50/40">
                     <td className="px-4 py-3 text-sm tabular-nums text-zinc-500">
                       {track.playerRank != null ? (
-                        <span className="inline-flex min-w-[2.5rem] items-center justify-center rounded-md bg-black/40 px-2 py-0.5 text-xs font-semibold text-white">
+                        <span className="inline-flex min-w-[2.5rem] items-center justify-center rounded-md bg-black px-2 py-0.5 text-xs font-semibold text-white">
                           #{track.playerRank}
                         </span>
                       ) : (
@@ -403,7 +403,7 @@ export default function SuperAdminMusicPage() {
                         <p className="truncate text-sm font-medium text-zinc-900">{track.title}</p>
                         <p className="truncate text-xs text-zinc-500">{track.artist}</p>
                         {track.playerRank != null && playlist === 'all' && (
-                          <p className="mt-1 text-[11px] font-medium text-blue-200">On floor playlist</p>
+                          <p className="mt-1 text-[11px] font-medium text-blue-700">On floor playlist</p>
                         )}
                       </div>
                     </td>
@@ -494,7 +494,7 @@ export default function SuperAdminMusicPage() {
                 label="Source URL"
                 value={
                   selected.sourceUrl ? (
-                    <a href={selected.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sky-700 underline">
+                    <a href={selected.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-blue-700 underline">
                       <Link2 className="h-3.5 w-3.5" />
                       View source
                     </a>
@@ -627,7 +627,7 @@ function DualHScroll({ children, deps }: { children: ReactNode; deps: unknown })
     <>
       <div
         ref={topRef}
-        className="music-table-h-scroll h-4 overflow-x-scroll overflow-y-hidden border-b border-white/10 bg-black/20"
+        className="music-table-h-scroll h-4 overflow-x-scroll overflow-y-hidden border-b border-zinc-200 bg-zinc-50"
         onScroll={() => sync(topRef.current, bodyRef.current)}
         aria-label="Horizontal scroll for music listings"
       >
@@ -660,13 +660,13 @@ function StatCard({ label, value, icon: Icon }: { label: string; value: number; 
 
 function StatusBadge({ status }: { status: TrackStatus }) {
   const styles: Record<TrackStatus, string> = {
-    active: 'border-white/20 bg-black text-white',
-    disabled: 'border-white/15 bg-white/10 text-slate-300',
-    license_review: 'border-white/20 bg-[#1e3a8a] text-white',
-    broken: 'border-white/20 bg-black text-slate-300',
-    removed: 'border-white/15 bg-white/10 text-slate-300',
-    blocked: 'border-white/20 bg-black text-slate-300',
-    pending_review: 'border-white/20 bg-[#1e3a8a] text-white',
+    active: 'border-black bg-black text-white',
+    disabled: 'border-zinc-200 bg-zinc-100 text-zinc-600',
+    license_review: 'border-blue-700 bg-blue-700 text-white',
+    broken: 'border-zinc-300 bg-zinc-200 text-zinc-700',
+    removed: 'border-zinc-200 bg-zinc-100 text-zinc-500',
+    blocked: 'border-zinc-800 bg-zinc-900 text-zinc-100',
+    pending_review: 'border-blue-700 bg-blue-700 text-white',
   };
 
   return <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${styles[status] || styles.disabled}`}>{status}</span>;

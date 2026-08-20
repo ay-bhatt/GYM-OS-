@@ -129,8 +129,8 @@ export default function PaymentsPage() {
       label: 'Total Revenue',
       value: `$${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       icon: DollarSign,
-      color: 'text-sky-600',
-      bg: 'bg-sky-50',
+      color: 'text-blue-600',
+      bg: 'bg-blue-50',
     },
     {
       label: "This Month's Revenue",
@@ -188,7 +188,7 @@ export default function PaymentsPage() {
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-500">Revenue</p>
+          <p className="admin-kicker">Revenue</p>
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Payments</h1>
           <p className="mt-1 text-sm text-zinc-500">Track member payments and revenue.</p>
         </div>
@@ -198,7 +198,7 @@ export default function PaymentsPage() {
             setFormError('');
             setModalOpen(true);
           }}
-          className="inline-flex items-center gap-2 rounded-2xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-200"
+          className="admin-primary-btn"
         >
           <Plus className="h-4 w-4" />
           Add Payment
@@ -354,7 +354,7 @@ export default function PaymentsPage() {
                     required
                     value={form.member_id}
                     onChange={(e) => setForm({ ...form, member_id: e.target.value })}
-                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-300 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   >
                     <option value="">Select member...</option>
                     {members.map((m) => (
@@ -374,7 +374,7 @@ export default function PaymentsPage() {
                       step="0.01"
                       value={form.amount}
                       onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                      className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-300 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                      className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                     />
                   </div>
                   <div>
@@ -385,7 +385,7 @@ export default function PaymentsPage() {
                       step="0.01"
                       value={form.discount}
                       onChange={(e) => setForm({ ...form, discount: e.target.value })}
-                      className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-300 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                      className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                     />
                   </div>
                 </div>
@@ -394,7 +394,7 @@ export default function PaymentsPage() {
                   <select
                     value={form.payment_method}
                     onChange={(e) => setForm({ ...form, payment_method: e.target.value })}
-                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-300 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   >
                     <option value="">Select...</option>
                     {paymentMethods.map((m) => (
@@ -408,7 +408,7 @@ export default function PaymentsPage() {
                     value={form.notes}
                     onChange={(e) => setForm({ ...form, notes: e.target.value })}
                     rows={2}
-                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-zinc-300 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
 

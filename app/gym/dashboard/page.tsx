@@ -173,11 +173,11 @@ export default function GymDashboard() {
       </div>
 
       <div className="admin-surface mt-6 p-4">
-        <div className="mb-4 flex rounded-xl bg-black/25 p-1">
+        <div className="mb-4 flex rounded-xl bg-zinc-100 p-1">
           <button
             onClick={() => setFloorTab('inside')}
             className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium ${
-              floorTab === 'inside' ? 'bg-[#1e3a8a] text-white shadow-sm' : 'text-slate-400'
+              floorTab === 'inside' ? 'bg-[#1d4ed8] text-white shadow-sm' : 'text-zinc-500'
             }`}
           >
             Inside now ({inside.length})
@@ -185,7 +185,7 @@ export default function GymDashboard() {
           <button
             onClick={() => setFloorTab('left')}
             className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium ${
-              floorTab === 'left' ? 'bg-[#1e3a8a] text-white shadow-sm' : 'text-slate-400'
+              floorTab === 'left' ? 'bg-[#1d4ed8] text-white shadow-sm' : 'text-zinc-500'
             }`}
           >
             Left today ({left.length})
@@ -212,7 +212,7 @@ export default function GymDashboard() {
                 {floorTab === 'inside' && (
                   <button
                     onClick={() => checkoutMember(member.attendanceId)}
-                    className="w-full rounded-xl border border-white/15 bg-black/30 py-2 text-xs font-medium text-white hover:bg-black/50"
+                    className="w-full rounded-xl border border-zinc-200 bg-black py-2 text-xs font-medium text-white hover:bg-zinc-800"
                   >
                     Check out
                   </button>
@@ -226,48 +226,48 @@ export default function GymDashboard() {
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <div className="admin-surface p-5">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">Attendance</h2>
-            <TrendingUp className="h-4 w-4 text-slate-400" />
+            <h2 className="text-sm font-semibold text-zinc-900">Attendance</h2>
+            <TrendingUp className="h-4 w-4 text-zinc-400" />
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={attendanceData}>
               <defs>
                 <linearGradient id="attendanceGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#93c5fd" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#93c5fd" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#2563eb" stopOpacity={0.28} />
+                  <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e3a5f" vertical={false} />
-              <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} allowDecimals={false} />
-              <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #1e3a5f', background: '#0b1d36', color: '#f8fafc', fontSize: '12px' }} />
-              <Area type="monotone" dataKey="count" stroke="#93c5fd" strokeWidth={2} fill="url(#attendanceGradient)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" vertical={false} />
+              <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#71717a' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: '#71717a' }} axisLine={false} tickLine={false} allowDecimals={false} />
+              <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e4e4e7', background: '#ffffff', color: '#18181b', fontSize: '12px' }} />
+              <Area type="monotone" dataKey="count" stroke="#2563eb" strokeWidth={2} fill="url(#attendanceGradient)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
         <div className="admin-surface p-5">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">Revenue</h2>
-            <DollarSign className="h-4 w-4 text-slate-400" />
+            <h2 className="text-sm font-semibold text-zinc-900">Revenue</h2>
+            <DollarSign className="h-4 w-4 text-zinc-400" />
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={revenueData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e3a5f" vertical={false} />
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" vertical={false} />
+              <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#71717a' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: '#71717a' }} axisLine={false} tickLine={false} />
               <Tooltip
-                contentStyle={{ borderRadius: '12px', border: '1px solid #1e3a5f', background: '#0b1d36', color: '#f8fafc', fontSize: '12px' }}
+                contentStyle={{ borderRadius: '12px', border: '1px solid #e4e4e7', background: '#ffffff', color: '#18181b', fontSize: '12px' }}
                 formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
               />
-              <Bar dataKey="revenue" fill="#1e3a8a" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="revenue" fill="#1d4ed8" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       <div className="admin-surface mt-6 p-5">
-        <h2 className="mb-3 text-sm font-semibold text-white">Account security</h2>
+        <h2 className="mb-3 text-sm font-semibold text-zinc-900">Account security</h2>
         <p className="text-sm text-zinc-500">Reset your gym admin password if you need a fresh temporary login.</p>
         <button
           onClick={handleResetPassword}

@@ -400,7 +400,7 @@ setSuccess(`Deleted ${deleteGym.name}.`);
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center p-8">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-sky-500" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-blue-600" />
       </div>
     );
   }
@@ -495,7 +495,7 @@ setSuccess(`Deleted ${deleteGym.name}.`);
               </thead>
               <tbody>
                 {filtered.map((gym) => (
-                  <tr key={gym.id} className="border-b border-zinc-100 last:border-0 hover:bg-sky-50/40">
+                  <tr key={gym.id} className="border-b border-zinc-100 last:border-0 hover:bg-blue-50/40">
                     <td className="px-4 py-3 text-sm font-medium text-zinc-900">{gym.name}</td>
                     <td className="px-4 py-3 text-sm text-zinc-600">{gym.gym_id}</td>
                     <td className="px-4 py-3 text-sm text-zinc-600">{gym.owner_name || '—'}</td>
@@ -618,7 +618,7 @@ setSuccess(`Deleted ${deleteGym.name}.`);
                       value={form.status}
                       onChange={(e) => setForm({ ...form, status: e.target.value })}
                       disabled={mode !== 'edit'}
-                      className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-400 disabled:bg-zinc-50"
+                      className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-500 disabled:bg-zinc-50"
                     >
                       <option value="active">active</option>
                       <option value="suspended">suspended</option>
@@ -641,7 +641,7 @@ setSuccess(`Deleted ${deleteGym.name}.`);
                         value={form.admin_password || ''}
                         onChange={(e) => setForm({ ...form, admin_password: e.target.value })}
                         placeholder="Set a password for the gym admin login"
-                        className="w-full rounded-lg border border-zinc-200 px-3 py-2 pr-10 text-sm outline-none focus:border-zinc-400"
+                        className="w-full rounded-lg border border-zinc-200 px-3 py-2 pr-10 text-sm outline-none focus:border-blue-500"
                       />
                       <button
                         type="button"
@@ -735,7 +735,7 @@ setSuccess(`Deleted ${deleteGym.name}.`);
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                             placeholder="Enter a new password to set (optional)"
-                            className="w-full rounded-lg border border-zinc-200 px-3 py-2 pr-10 text-sm outline-none focus:border-zinc-400"
+                            className="w-full rounded-lg border border-zinc-200 px-3 py-2 pr-10 text-sm outline-none focus:border-blue-500"
                           />
                           <button
                             type="button"
@@ -802,7 +802,7 @@ setSuccess(`Deleted ${deleteGym.name}.`);
                 value={deleteConfirm}
                 onChange={(e) => setDeleteConfirm(e.target.value)}
                 placeholder={deleteGym.gym_id}
-                className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-400"
+                className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-500"
               />
             </div>
           )}
@@ -878,14 +878,14 @@ function Field({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
-          className="min-h-[88px] w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-400 disabled:bg-zinc-50"
+          className="min-h-[88px] w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-500 disabled:bg-zinc-50"
         />
       ) : (
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
-          className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-400 disabled:bg-zinc-50"
+          className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-500 disabled:bg-zinc-50"
         />
       )}
       {helperText && <p className="mt-1 text-xs text-zinc-500">{helperText}</p>}

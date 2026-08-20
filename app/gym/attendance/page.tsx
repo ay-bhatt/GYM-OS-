@@ -61,7 +61,7 @@ export default function AttendancePage() {
       className="px-4 py-4 lg:p-8"
     >
       <div className="mb-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-500">Floor</p>
+        <p className="admin-kicker">Floor</p>
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Scan & attendance</h1>
         <p className="mt-1 text-sm text-zinc-500">First scan checks in. Second scan checks out.</p>
       </div>
@@ -190,12 +190,12 @@ function ScanTab() {
             {scanning && (
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                 <div className="relative h-56 w-56">
-                  <div className="absolute inset-0 rounded-xl border-2 border-sky-500/80" />
+                  <div className="absolute inset-0 rounded-xl border-2 border-blue-500/80" />
                   <motion.div
                     initial={{ top: '0%' }}
                     animate={{ top: ['0%', '100%', '0%'] }}
                     transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                    className="absolute left-0 right-0 h-0.5 bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.8)]"
+                    className="absolute left-0 right-0 h-0.5 bg-blue-500 shadow-[0_0_8px_rgba(37,99,235,0.8)]"
                   />
                 </div>
               </div>
@@ -215,7 +215,7 @@ function ScanTab() {
               <button
                 onClick={startScanner}
                 disabled={processing}
-                className="inline-flex items-center gap-2 rounded-2xl bg-violet-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-violet-200 disabled:opacity-50"
+                className="admin-primary-btn disabled:opacity-50"
               >
                 <Camera className="h-4 w-4" />
                 Start Camera
@@ -247,7 +247,7 @@ function ScanTab() {
             transition={{ duration: 0.2 }}
             className={`mt-4 rounded-xl border p-5 ${
               scanResult.action === 'checkout'
-                ? 'border-violet-200 bg-violet-50'
+                ? 'border-blue-200 bg-blue-50'
                 : scanResult.action === 'already_done'
                   ? 'border-amber-200 bg-amber-50'
                   : 'border-green-200 bg-green-50'
@@ -262,13 +262,13 @@ function ScanTab() {
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
                 >
-                  <CheckCircle className={`h-5 w-5 flex-shrink-0 ${scanResult.action === 'checkout' ? 'text-violet-600' : 'text-green-600'}`} />
+                  <CheckCircle className={`h-5 w-5 flex-shrink-0 ${scanResult.action === 'checkout' ? 'text-blue-600' : 'text-green-600'}`} />
                 </motion.div>
               )}
               <div className="flex-1">
                 <p className={`text-sm font-medium ${
                   scanResult.action === 'checkout'
-                    ? 'text-violet-900'
+                    ? 'text-blue-900'
                     : scanResult.action === 'already_done'
                       ? 'text-amber-900'
                       : 'text-green-900'
@@ -383,7 +383,7 @@ function HistoryTab() {
             type="date"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
-            className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-zinc-300 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+            className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           />
         </div>
         <div>
@@ -392,7 +392,7 @@ function HistoryTab() {
             type="date"
             value={to}
             onChange={(e) => setTo(e.target.value)}
-            className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-zinc-300 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+            className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           />
         </div>
         <button

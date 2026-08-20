@@ -104,7 +104,7 @@ export default function SuperAdminDashboard() {
       >
         <div className="flex items-center justify-between border-b border-zinc-100 px-5 py-4">
           <div>
-            <h2 className="text-sm font-semibold text-white">Network gyms</h2>
+            <h2 className="text-sm font-semibold text-zinc-900">Network gyms</h2>
             <p className="mt-0.5 text-xs text-zinc-500">Live snapshot of every location on the platform.</p>
           </div>
         </div>
@@ -129,15 +129,15 @@ export default function SuperAdminDashboard() {
                 gyms.map((g) => (
                   <tr key={g.id} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50">
                     <td className="px-5 py-3.5 text-sm text-zinc-500">{g.gym_id}</td>
-                    <td className="px-5 py-3.5 text-sm font-medium text-white">{g.name}</td>
+                    <td className="px-5 py-3.5 text-sm font-medium text-zinc-900">{g.name}</td>
                     <td className="px-5 py-3.5 text-sm text-zinc-600">{g.owner_name || '—'}</td>
                     <td className="px-5 py-3.5 text-sm text-zinc-600">{g.member_count}</td>
                     <td className="px-5 py-3.5 text-sm tabular-nums text-zinc-600">${g.revenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     <td className="px-5 py-3.5">
                       <span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold capitalize ${
                         g.status === 'active'
-                          ? 'border-white/20 bg-black text-white'
-                          : 'border-white/15 bg-white/10 text-slate-300'
+                          ? 'border-black bg-black text-white'
+                          : 'border-zinc-200 bg-zinc-100 text-zinc-600'
                       }`}>
                         {g.status}
                       </span>
