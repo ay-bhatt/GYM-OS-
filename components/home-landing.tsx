@@ -22,16 +22,12 @@ import {
   Users,
   X,
 } from 'lucide-react';
-<<<<<<< HEAD
 import dynamic from 'next/dynamic';
 
 const Dumbbell3D = dynamic(() => import('@/components/dumbbell-3d'), {
   ssr: false,
   loading: () => <div className="h-full w-full bg-zinc-950" />,
 });
-=======
-import Dumbbell3D from '@/components/dumbbell-3d';
->>>>>>> c56d30689396b218514a6278f83a8e01920b619b
 
 const HIGHLIGHTS = [
   {
@@ -106,28 +102,19 @@ export function HomeLanding() {
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden bg-zinc-950 lg:flex-row">
-<<<<<<< HEAD
       <div className="relative flex min-h-[56vh] flex-none items-end justify-center overflow-hidden bg-zinc-950 lg:min-h-screen lg:flex-[1.05]">
         <div className="absolute inset-0">
           <Dumbbell3D />
         </div>
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(14,165,233,0.2),transparent_46%),radial-gradient(circle_at_80%_80%,rgba(14,165,233,0.1),transparent_36%)]" />
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(9,9,11,0.08),transparent_32%,rgba(9,9,11,0.72))] lg:bg-[linear-gradient(to_right,rgba(9,9,11,0.08),transparent_44%,rgba(9,9,11,0.28))]" />
-=======
-      <div className="relative flex min-h-[46vh] flex-none items-end justify-center overflow-hidden bg-zinc-950 lg:min-h-screen lg:flex-[1.05]">
-        <div className="absolute inset-0">
-          <Dumbbell3D />
-        </div>
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(14,165,233,0.22),transparent_42%),radial-gradient(circle_at_80%_80%,rgba(14,165,233,0.12),transparent_36%)]" />
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(9,9,11,0.15),transparent_28%,rgba(9,9,11,0.88))] lg:bg-[linear-gradient(to_right,rgba(9,9,11,0.15),transparent_40%,rgba(9,9,11,0.35))]" />
->>>>>>> c56d30689396b218514a6278f83a8e01920b619b
         <div className="pointer-events-none absolute inset-0 opacity-[0.12] [background-image:linear-gradient(rgba(255,255,255,0.16)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.16)_1px,transparent_1px)] [background-size:56px_56px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_78%)]" />
 
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="relative z-10 w-full px-6 pb-8 pt-20 text-center lg:px-12 lg:pb-16 lg:pt-0 lg:text-left"
+          className="relative z-10 w-full px-6 pb-8 pt-8 text-center lg:px-12 lg:pb-16 lg:pt-0 lg:text-left"
         >
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 backdrop-blur-sm">
             <span className="h-1.5 w-1.5 rounded-full bg-sky-400 shadow-[0_0_10px_rgba(56,189,248,0.9)]" />
@@ -168,7 +155,7 @@ export function HomeLanding() {
         <button
           type="button"
           onClick={openLogin}
-          className="fixed right-4 top-[4.25rem] z-[101] inline-flex h-11 w-11 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-800 shadow-lg sm:absolute sm:right-5 sm:top-4 sm:z-20 lg:right-8 lg:top-6"
+          className="fixed right-4 top-4 z-[101] inline-flex h-11 w-11 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-800 shadow-lg sm:absolute sm:right-5 sm:top-4 sm:z-20 lg:right-8 lg:top-6"
           title="Sign in"
           aria-label="Sign in"
         >

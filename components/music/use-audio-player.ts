@@ -70,7 +70,6 @@ export function useAudioPlayer(tracks: MusicTrack[]): AudioPlayerControls {
     };
     const handleError = () => {
       failureCountRef.current += 1;
-<<<<<<< HEAD
       if (tracksRef.current.length <= 1) {
         setError('Track failed to play');
         setIsPlaying(false);
@@ -80,14 +79,6 @@ export function useAudioPlayer(tracks: MusicTrack[]): AudioPlayerControls {
         setError('Skipping unplayable tracks');
         failureCountRef.current = 0;
       }
-=======
-      if (failureCountRef.current > MAX_FAILURES || tracksRef.current.length <= 1) {
-        setError('Music unavailable');
-        wantPlayingRef.current = false;
-        setIsPlaying(false);
-        return;
-      }
->>>>>>> c56d30689396b218514a6278f83a8e01920b619b
       engineRef.current?.advance();
       setTick((value) => value + 1);
     };
@@ -190,7 +181,6 @@ export function useAudioPlayer(tracks: MusicTrack[]): AudioPlayerControls {
       audio.load();
     }
     wantPlayingRef.current = true;
-<<<<<<< HEAD
     setError(null);
     try {
       await audio.play();
@@ -211,18 +201,6 @@ export function useAudioPlayer(tracks: MusicTrack[]): AudioPlayerControls {
       } else {
         setError('Track failed to play');
       }
-=======
-    try {
-      await audio.play();
-      setIsPlaying(true);
-      setError(null);
-      failureCountRef.current = 0;
-      audio.muted = isMuted;
-    } catch {
-      wantPlayingRef.current = false;
-      setIsPlaying(false);
-      setError('Tap play to start music');
->>>>>>> c56d30689396b218514a6278f83a8e01920b619b
     }
   }, [current, isMuted]);
 

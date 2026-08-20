@@ -22,5 +22,5 @@ that is shown once so the super admin can share it with the gym owner.
 -- Super Admin — the only seeded account; required to log in and manage gyms.
 INSERT INTO users (username, password_hash, role, gym_id, name, status)
 VALUES
-  ('superadmin', '$2b$10$uKeBov4FhH5yE2Zvq1gf4Ot101Bg7mfylyt1Op78VMt.x72WY5l5i', 'SUPER_ADMIN', null, 'System Administrator', 'active')
+  ('superadmin', '$2b$10$u4ZBfklNc47qi3QL.Z6qL.Qvg496nr.kUdjnqZUi8LC/FH3p8IXRa', 'SUPER_ADMIN', null, 'System Administrator', 'active')
 ON CONFLICT (username) DO NOTHING;

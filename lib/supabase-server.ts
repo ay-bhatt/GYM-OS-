@@ -1,5 +1,5 @@
-<<<<<<< HEAD
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { createLocalServerClient } from './local-db';
 
 function getSupabaseUrl() {
   return process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
@@ -13,43 +13,42 @@ export function isSupabaseConfigured(): boolean {
   return Boolean(getSupabaseUrl() && getServiceRoleKey());
 }
 
-export function createServerClient() {
-  const supabaseUrl = getSupabaseUrl();
-  const serviceRoleKey = getServiceRoleKey();
-
-=======
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-
-export function createServerClient() {
->>>>>>> c56d30689396b218514a6278f83a8e01920b619b
-  if (!supabaseUrl) {
-    throw new Error(
-      'Supabase URL is not configured. Set NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL.'
-    );
-  }
-
-  if (!serviceRoleKey) {
-    throw new Error(
-      'Supabase service role key is not configured. Set SUPABASE_SERVICE_ROLE_KEY so server routes can read the users table.'
-    );
-  }
-
-  return createClient(supabaseUrl, serviceRoleKey, {
+function createRemoteClient() {
+  return createClient(getSupabaseUrl(), getServiceRoleKey(), {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
     },
   });
 }
-<<<<<<< HEAD
+
+function allowLocalFallback() {
+  return process.env.NODE_ENV !== 'production' || process.env.ALLOW_LOCAL_DB === 'true';
+}
+
+export function createServerClient() {
+  if (isSupabaseConfigured()) {
+    return createRemoteClient();
+  }
+
+  if (allowLocalFallback()) {
+    return createLocalServerClient() as unknown as SupabaseClient;
+  }
+
+  if (!getSupabaseUrl()) {
+    throw new Error(
+      'Supabase URL is not configured. Set NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL.'
+    );
+  }
+
+  throw new Error(
+    'Supabase service role key is not configured. Set SUPABASE_SERVICE_ROLE_KEY so server routes can read the users table.'
+  );
+}
 
 /** Returns null when env is missing so optional features can skip persistence. */
 export function tryCreateServerClient(): SupabaseClient | null {
-  if (!isSupabaseConfigured()) return null;
-  return createServerClient();
+  if (isSupabaseConfigured()) return createRemoteClient();
+  if (allowLocalFallback()) return createLocalServerClient() as unknown as SupabaseClient;
+  return null;
 }
-=======
->>>>>>> c56d30689396b218514a6278f83a8e01920b619b

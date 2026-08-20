@@ -117,11 +117,11 @@ export function Sidebar({ role, gymName }: { role: string; gymName?: string }) {
 
   return (
     <>
-      <aside className="sticky top-0 hidden h-screen w-64 flex-shrink-0 flex-col border-r border-white/10 bg-zinc-950 pt-16 lg:flex">
+      <aside className="sticky top-0 hidden h-screen w-64 flex-shrink-0 flex-col border-r border-white/10 bg-zinc-950 lg:flex">
         {SidebarContent}
       </aside>
 
-      <div className={`fixed inset-x-0 top-16 z-40 h-14 items-center justify-between border-b border-white/10 bg-zinc-950/95 px-4 backdrop-blur ${role === 'SUPER_ADMIN' ? 'flex lg:hidden' : 'hidden'}`}>
+      <div className={`fixed inset-x-0 top-0 z-40 h-14 items-center justify-between border-b border-white/10 bg-zinc-950/95 px-4 backdrop-blur ${role === 'SUPER_ADMIN' ? 'flex lg:hidden' : 'hidden'}`}>
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500">
             <Dumbbell className="h-3.5 w-3.5 text-white" />
@@ -148,11 +148,11 @@ export function Sidebar({ role, gymName }: { role: string; gymName?: string }) {
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ type: 'tween', duration: 0.2 }}
-              className="fixed left-0 top-0 z-[120] h-full w-64 bg-zinc-950 pt-16 lg:hidden"
+              className="fixed left-0 top-0 z-[120] h-full w-64 bg-zinc-950 lg:hidden"
             >
               <button
                 onClick={() => setMobileOpen(false)}
-                className="absolute right-3 top-20 rounded-lg p-1.5 text-zinc-400 hover:bg-white/10 hover:text-white"
+                className="absolute right-3 top-3 rounded-lg p-1.5 text-zinc-400 hover:bg-white/10 hover:text-white"
                 aria-label="Close menu"
               >
                 <X className="h-4 w-4" />

@@ -20,15 +20,10 @@
  * guarantees zero hydration mismatch.
  */
 
-<<<<<<< HEAD
 import { useEffect, useState } from 'react';
-=======
-import { useEffect, useState, useCallback } from 'react';
->>>>>>> c56d30689396b218514a6278f83a8e01920b619b
-import { motion } from 'framer-motion';
 import { Music } from 'lucide-react';
 import { useAudioPlayer } from './use-audio-player';
-import { MusicPlayer } from './music-player';
+import { MusicPlayer, MusicPlayerDock } from './music-player';
 import type { MusicTrack } from '@/lib/music/provider';
 
 const CACHE_KEY = 'forggym-music-catalog';
@@ -42,7 +37,6 @@ export function GlobalPlayer() {
   useEffect(() => {
     setMounted(true);
 
-    // 1) Instant paint from cache (if fresh).
     let cached: MusicTrack[] | null = null;
     try {
       const raw = localStorage.getItem(CACHE_KEY);
@@ -57,114 +51,66 @@ export function GlobalPlayer() {
     }
     if (cached && cached.length) setTracks(cached);
 
-<<<<<<< HEAD
     let cancelled = false;
     const load = () => {
       const controller = new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), 15000);
       return fetch('/api/music/tracks', { signal: controller.signal })
-=======
-    const controller = new AbortController();
-    const load = () =>
-      fetch('/api/music/tracks', { signal: controller.signal })
->>>>>>> c56d30689396b218514a6278f83a8e01920b619b
         .then(async (res) => {
           if (!res.ok) return [];
           const json: { data?: MusicTrack[] } = await res.json().catch(() => ({ data: [] }));
           return json.data || [];
         })
         .then((fresh) => {
-<<<<<<< HEAD
           if (cancelled || !fresh.length) return;
           setTracks(fresh);
           try {
             localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), tracks: fresh }));
           } catch {
             /* ignore storage errors */
-=======
-          setTracks(fresh);
-          if (fresh.length) {
-            try {
-              localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), tracks: fresh }));
-            } catch {
-              /* ignore storage errors */
-            }
->>>>>>> c56d30689396b218514a6278f83a8e01920b619b
           }
         })
         .catch(() => {
           // Keep whatever we had (cache or empty).
         })
-<<<<<<< HEAD
         .finally(() => {
           window.clearTimeout(timeout);
           if (!cancelled) setLoading(false);
         });
     };
-=======
-        .finally(() => setLoading(false));
->>>>>>> c56d30689396b218514a6278f83a8e01920b619b
 
     load();
     const refresh = window.setInterval(load, 15 * 60 * 1000);
     return () => {
-<<<<<<< HEAD
       cancelled = true;
-=======
-      controller.abort();
->>>>>>> c56d30689396b218514a6278f83a8e01920b619b
       window.clearInterval(refresh);
     };
   }, []);
 
-  // The hook owns the audio element + playback state. It is stable across
-  // navigation because GlobalPlayer itself does not unmount.
   const controls = useAudioPlayer(tracks);
   const current = controls.current;
 
   if (!mounted) return null;
 
   if (!tracks.length) {
-    if (loading) return <MusicLoadingBar />;
-    return <MusicUnavailableBar />;
+    if (loading) return <MusicStatusButton pulse />;
+    return <MusicStatusButton />;
   }
 
   return <MusicPlayer track={current} controls={controls} />;
 }
 
-/** Compact skeleton shown while the catalog is loading for the first time. */
-function MusicLoadingBar() {
+function MusicStatusButton({ pulse = false }: { pulse?: boolean }) {
   return (
-    <motion.div
-      initial={{ y: -40 }}
-      animate={{ y: 0 }}
-      transition={{ type: 'spring', stiffness: 320, damping: 28 }}
-      className="pointer-events-none fixed inset-x-0 top-0 z-[100] h-16 border-b border-zinc-200 bg-white/95 dark:border-zinc-800 dark:bg-zinc-900/95"
-    >
-      <div className="flex h-full items-center gap-3 px-3">
-        <div className="h-10 w-10 rounded-md bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
-        <div className="flex flex-col gap-1.5">
-          <div className="h-3.5 w-28 rounded bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
-          <div className="h-3 w-20 rounded bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
-        </div>
+    <MusicPlayerDock>
+      <div
+        className={`flex h-14 w-14 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-400 shadow-[0_12px_28px_rgba(15,23,42,0.12)] ring-4 ring-white dark:border-zinc-700 dark:bg-zinc-900 dark:ring-zinc-900 ${
+          pulse ? 'animate-pulse' : ''
+        }`}
+        title={pulse ? 'Loading music' : 'Music unavailable'}
+      >
+        <Music className="h-5 w-5" />
       </div>
-    </motion.div>
-  );
-}
-
-/** Fallback bar shown when there is no catalog (e.g. API unreachable). */
-function MusicUnavailableBar() {
-  return (
-    <motion.div
-      initial={{ y: -40 }}
-      animate={{ y: 0 }}
-      transition={{ type: 'spring', stiffness: 320, damping: 28 }}
-      className="pointer-events-auto fixed inset-x-0 top-0 z-[100] h-16 border-b border-zinc-200 bg-white/95 dark:border-zinc-800 dark:bg-zinc-900/95"
-    >
-      <div className="flex h-full items-center gap-3 px-3">
-        <Music className="h-5 w-5 text-zinc-400" />
-        <span className="text-sm text-zinc-500 dark:text-zinc-400">Music unavailable</span>
-      </div>
-    </motion.div>
+    </MusicPlayerDock>
   );
 }

@@ -11,11 +11,7 @@
  */
 
 import { MusicProvider, MusicTrack, MusicCategory, SearchOptions } from './provider';
-<<<<<<< HEAD
 import { AUDIUS_API_BASE, AUDIUS_API_KEY, AUDIUS_APP_NAME } from './config';
-=======
-import { AUDIUS_API_BASE, AUDIUS_API_KEY } from './config';
->>>>>>> c56d30689396b218514a6278f83a8e01920b619b
 
 type AudiusArtwork = Record<string, string> & { mirrors?: string[] };
 
@@ -69,7 +65,6 @@ function getHeaders(): Record<string, string> {
   return headers;
 }
 
-<<<<<<< HEAD
 async function fetchAudius(url: string, timeoutMs = 8000): Promise<Response | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -91,8 +86,6 @@ function withAppName(url: string): string {
   return parsed.toString();
 }
 
-=======
->>>>>>> c56d30689396b218514a6278f83a8e01920b619b
 function inferCategory(raw: AudiusRawTrack): MusicCategory {
   const genre = (raw.genre || '').toLowerCase();
   for (const [key, cat] of Object.entries(CATEGORY_GENRE_MAP)) {
@@ -120,7 +113,6 @@ export class AudiusMusicProvider extends MusicProvider {
   async searchTracks(query: string, options: SearchOptions = {}): Promise<MusicTrack[]> {
     const { limit = 10, offset = 0 } = options;
     const params = new URLSearchParams({
-<<<<<<< HEAD
       query,
       q: query,
       limit: String(limit),
@@ -130,17 +122,6 @@ export class AudiusMusicProvider extends MusicProvider {
     const res = await fetchAudius(`${AUDIUS_API_BASE}/v1/tracks/search?${params.toString()}`);
     if (!res?.ok) {
       console.warn(`[audius] search failed: ${res?.status ?? 'timeout'}`);
-=======
-      q: query,
-      limit: String(limit),
-      offset: String(offset),
-    });
-    const res = await fetch(`${AUDIUS_API_BASE}/v1/tracks/search?${params.toString()}`, {
-      headers: getHeaders(),
-    });
-    if (!res.ok) {
-      console.warn(`[audius] search failed: ${res.status}`);
->>>>>>> c56d30689396b218514a6278f83a8e01920b619b
       return [];
     }
     const json: { data?: AudiusRawTrack[] } = await res.json().catch(() => ({ data: [] }));
@@ -153,19 +134,11 @@ export class AudiusMusicProvider extends MusicProvider {
       return cached.track;
     }
 
-<<<<<<< HEAD
     const res = await fetchAudius(
       withAppName(`${AUDIUS_API_BASE}/v1/tracks/${encodeURIComponent(providerTrackId)}`)
     );
     if (!res?.ok) {
       console.warn(`[audius] getTrack(${providerTrackId}) failed: ${res?.status ?? 'timeout'}`);
-=======
-    const res = await fetch(`${AUDIUS_API_BASE}/v1/tracks/${encodeURIComponent(providerTrackId)}`, {
-      headers: getHeaders(),
-    });
-    if (!res.ok) {
-      console.warn(`[audius] getTrack(${providerTrackId}) failed: ${res.status}`);
->>>>>>> c56d30689396b218514a6278f83a8e01920b619b
       return null;
     }
     const json: { data?: AudiusRawTrack } = await res.json().catch(() => ({ data: undefined }));
@@ -183,11 +156,7 @@ export class AudiusMusicProvider extends MusicProvider {
    * fetched from Audius, never proxied through ForgeGym.
    */
   async getStreamUrl(providerTrackId: string): Promise<string> {
-<<<<<<< HEAD
     return withAppName(`${AUDIUS_API_BASE}/v1/tracks/${encodeURIComponent(providerTrackId)}/stream`);
-=======
-    return `${AUDIUS_API_BASE}/v1/tracks/${encodeURIComponent(providerTrackId)}/stream`;
->>>>>>> c56d30689396b218514a6278f83a8e01920b619b
   }
 
   /**

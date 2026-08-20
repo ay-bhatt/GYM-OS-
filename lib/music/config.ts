@@ -7,10 +7,7 @@
  */
 
 export const AUDIUS_API_BASE = 'https://api.audius.co';
-<<<<<<< HEAD
 export const AUDIUS_APP_NAME = process.env.AUDIUS_APP_NAME || 'forggym';
-=======
->>>>>>> c56d30689396b218514a6278f83a8e01920b619b
 
 /**
  * Which provider the MusicService should instantiate.

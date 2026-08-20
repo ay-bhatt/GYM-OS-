@@ -33,7 +33,7 @@ export default function Home() {
 
   if (authChecking) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-neutral-950 pt-16 lg:pt-20">
+      <div className="flex min-h-screen items-center justify-center bg-neutral-950">
         <Loader2 className="h-8 w-8 animate-spin text-neutral-500" />
       </div>
     );
