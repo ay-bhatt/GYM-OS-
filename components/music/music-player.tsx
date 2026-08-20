@@ -20,7 +20,11 @@ interface MusicPlayerProps {
 
 export function MusicPlayer({ track, controls }: MusicPlayerProps) {
   const { isPlaying, currentTime, duration, progress, hasTracks, error } = controls;
+<<<<<<< HEAD
   const canPlay = hasTracks && Boolean(track?.streamUrl);
+=======
+  const canPlay = hasTracks && !error;
+>>>>>>> c56d30689396b218514a6278f83a8e01920b619b
 
   return (
     <motion.div
@@ -53,8 +57,13 @@ export function MusicPlayer({ track, controls }: MusicPlayerProps) {
           <p className="truncate text-xs font-medium text-zinc-900 sm:text-sm dark:text-zinc-100" title={track?.title}>
             {track?.title || '—'}
           </p>
+<<<<<<< HEAD
           <p className="truncate text-[11px] text-zinc-500 sm:text-xs dark:text-zinc-400" title={error || track?.artist}>
             {error || track?.artist || '—'}
+=======
+          <p className="truncate text-[11px] text-zinc-500 sm:text-xs dark:text-zinc-400" title={track?.artist}>
+            {track?.artist || '—'}
+>>>>>>> c56d30689396b218514a6278f83a8e01920b619b
           </p>
         </div>
       </div>

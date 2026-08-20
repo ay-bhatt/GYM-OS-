@@ -20,7 +20,11 @@
  * guarantees zero hydration mismatch.
  */
 
+<<<<<<< HEAD
 import { useEffect, useState } from 'react';
+=======
+import { useEffect, useState, useCallback } from 'react';
+>>>>>>> c56d30689396b218514a6278f83a8e01920b619b
 import { motion } from 'framer-motion';
 import { Music } from 'lucide-react';
 import { useAudioPlayer } from './use-audio-player';
@@ -53,38 +57,62 @@ export function GlobalPlayer() {
     }
     if (cached && cached.length) setTracks(cached);
 
+<<<<<<< HEAD
     let cancelled = false;
     const load = () => {
       const controller = new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), 15000);
       return fetch('/api/music/tracks', { signal: controller.signal })
+=======
+    const controller = new AbortController();
+    const load = () =>
+      fetch('/api/music/tracks', { signal: controller.signal })
+>>>>>>> c56d30689396b218514a6278f83a8e01920b619b
         .then(async (res) => {
           if (!res.ok) return [];
           const json: { data?: MusicTrack[] } = await res.json().catch(() => ({ data: [] }));
           return json.data || [];
         })
         .then((fresh) => {
+<<<<<<< HEAD
           if (cancelled || !fresh.length) return;
           setTracks(fresh);
           try {
             localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), tracks: fresh }));
           } catch {
             /* ignore storage errors */
+=======
+          setTracks(fresh);
+          if (fresh.length) {
+            try {
+              localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), tracks: fresh }));
+            } catch {
+              /* ignore storage errors */
+            }
+>>>>>>> c56d30689396b218514a6278f83a8e01920b619b
           }
         })
         .catch(() => {
           // Keep whatever we had (cache or empty).
         })
+<<<<<<< HEAD
         .finally(() => {
           window.clearTimeout(timeout);
           if (!cancelled) setLoading(false);
         });
     };
+=======
+        .finally(() => setLoading(false));
+>>>>>>> c56d30689396b218514a6278f83a8e01920b619b
 
     load();
     const refresh = window.setInterval(load, 15 * 60 * 1000);
     return () => {
+<<<<<<< HEAD
       cancelled = true;
+=======
+      controller.abort();
+>>>>>>> c56d30689396b218514a6278f83a8e01920b619b
       window.clearInterval(refresh);
     };
   }, []);

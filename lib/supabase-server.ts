@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 function getSupabaseUrl() {
@@ -16,6 +17,14 @@ export function createServerClient() {
   const supabaseUrl = getSupabaseUrl();
   const serviceRoleKey = getServiceRoleKey();
 
+=======
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+export function createServerClient() {
+>>>>>>> c56d30689396b218514a6278f83a8e01920b619b
   if (!supabaseUrl) {
     throw new Error(
       'Supabase URL is not configured. Set NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL.'
@@ -35,9 +44,12 @@ export function createServerClient() {
     },
   });
 }
+<<<<<<< HEAD
 
 /** Returns null when env is missing so optional features can skip persistence. */
 export function tryCreateServerClient(): SupabaseClient | null {
   if (!isSupabaseConfigured()) return null;
   return createServerClient();
 }
+=======
+>>>>>>> c56d30689396b218514a6278f83a8e01920b619b

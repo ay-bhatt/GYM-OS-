@@ -16,7 +16,11 @@
  * session, which is what keeps Gym 1's playback independent of Gym 2's.
  */
 
+<<<<<<< HEAD
 import { createServerClient, tryCreateServerClient } from '@/lib/supabase-server';
+=======
+import { createServerClient } from '@/lib/supabase-server';
+>>>>>>> c56d30689396b218514a6278f83a8e01920b619b
 import { MusicProvider, MusicTrack, MusicCategory, TrackStatus } from './provider';
 import { AudiusMusicProvider } from './audius-provider';
 import { PixabayMusicProvider, rewritePixabayStreamUrl } from './pixabay-provider';
@@ -29,6 +33,7 @@ export type MusicServiceOptions = {
   category?: MusicCategory | string;
 };
 
+<<<<<<< HEAD
 function toClientPlaybackTrack(track: MusicTrack): MusicTrack {
   const withProviderCache = rewritePixabayStreamUrl(track);
   return {
@@ -37,6 +42,8 @@ function toClientPlaybackTrack(track: MusicTrack): MusicTrack {
   };
 }
 
+=======
+>>>>>>> c56d30689396b218514a6278f83a8e01920b619b
 function createProvider(): MusicProvider {
   const id = (MUSIC_PROVIDER || 'pixabay').toLowerCase();
   if (id === 'pixabay') return new PixabayMusicProvider();
@@ -90,7 +97,11 @@ export class MusicService {
       if (filtered.length >= 20) source = filtered;
     }
 
+<<<<<<< HEAD
     return source.map(toClientPlaybackTrack);
+=======
+    return source.map(rewritePixabayStreamUrl);
+>>>>>>> c56d30689396b218514a6278f83a8e01920b619b
   }
 
   async getTrackById(id: string): Promise<MusicTrack | null> {
@@ -100,6 +111,7 @@ export class MusicService {
     const fromDb = await this.fetchTrackFromDb(id);
     if (fromDb) return this.enrichTrack(fromDb);
 
+<<<<<<< HEAD
     const pixabayId = id.startsWith('pixabay-') ? id.slice('pixabay-'.length) : id;
     const fromPixabay = await new PixabayMusicProvider().getTrack(pixabayId);
     if (fromPixabay) return this.enrichTrack(fromPixabay);
@@ -113,12 +125,26 @@ export class MusicService {
     }
 
     return null;
+=======
+    if (this.provider.name === 'pixabay') {
+      const providerId = id.startsWith('pixabay-') ? id.slice('pixabay-'.length) : id;
+      const fromProvider = await this.provider.getTrack(providerId);
+      if (fromProvider) return this.enrichTrack(fromProvider);
+    }
+
+    const track = FALLBACK_CATALOG.find((t) => t.id === id || t.providerTrackId === id) ?? null;
+    return track ? this.enrichTrack(track) : null;
+>>>>>>> c56d30689396b218514a6278f83a8e01920b619b
   }
 
   async getAdminTracks(filters: { search?: string; status?: string; provider?: string; genre?: string; country?: string } = {}): Promise<MusicTrack[]> {
     try {
+<<<<<<< HEAD
       const supabase = tryCreateServerClient();
       if (!supabase) return [];
+=======
+      const supabase = createServerClient();
+>>>>>>> c56d30689396b218514a6278f83a8e01920b619b
       let query = supabase.from('music_tracks').select('*').order('created_at', { ascending: false });
 
       if (filters.status) query = query.eq('status', filters.status);
@@ -228,16 +254,23 @@ export class MusicService {
   async resolveStreamUrl(trackId: string): Promise<string | null> {
     const track = await this.getTrackById(trackId);
     if (!track || track.status !== 'active') return null;
+<<<<<<< HEAD
     if (track.streamUrl && /^https?:\/\//i.test(track.streamUrl)) {
+=======
+    if (track.streamUrl && track.streamUrl.startsWith('http')) {
+>>>>>>> c56d30689396b218514a6278f83a8e01920b619b
       return track.streamUrl;
     }
     try {
       if (track.provider === 'audius') {
         return new AudiusMusicProvider().getStreamUrl(track.providerTrackId);
       }
+<<<<<<< HEAD
       if (track.provider === 'pixabay') {
         return await new PixabayMusicProvider().getStreamUrl(track.providerTrackId);
       }
+=======
+>>>>>>> c56d30689396b218514a6278f83a8e01920b619b
       return await this.provider.getStreamUrl(track.providerTrackId);
     } catch (e) {
       console.warn('[music] getStreamUrl failed, using cached value', e);
@@ -250,8 +283,12 @@ export class MusicService {
 
   private async fetchApprovedFromDb(category?: MusicCategory | string): Promise<MusicTrack[] | null> {
     try {
+<<<<<<< HEAD
       const supabase = tryCreateServerClient();
       if (!supabase) return null;
+=======
+      const supabase = createServerClient();
+>>>>>>> c56d30689396b218514a6278f83a8e01920b619b
       let query = supabase
         .from('music_tracks')
         .select('*')
@@ -277,8 +314,12 @@ export class MusicService {
 
   private async fetchTrackFromDb(id: string): Promise<MusicTrack | null> {
     try {
+<<<<<<< HEAD
       const supabase = tryCreateServerClient();
       if (!supabase) return null;
+=======
+      const supabase = createServerClient();
+>>>>>>> c56d30689396b218514a6278f83a8e01920b619b
       const { data } = await supabase
         .from('music_tracks')
         .select('*')
@@ -364,8 +405,12 @@ export class MusicService {
 
   private async cacheEnrichment(id: string, artworkUrl: string | null, duration: number | null) {
     try {
+<<<<<<< HEAD
       const supabase = tryCreateServerClient();
       if (!supabase) return;
+=======
+      const supabase = createServerClient();
+>>>>>>> c56d30689396b218514a6278f83a8e01920b619b
       await supabase
         .from('music_tracks')
         .update({ artwork_url: artworkUrl, duration, updated_at: new Date().toISOString() })
