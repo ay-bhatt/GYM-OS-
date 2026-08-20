@@ -28,6 +28,12 @@ import type { MusicTrack } from '@/lib/music/provider';
 
 const CACHE_KEY = 'forggym-music-catalog';
 const CACHE_TTL_MS = 2 * 60 * 1000;
+const PLAYER_TRACK_LIMIT = 400;
+
+function limitTracks(tracks: MusicTrack[]): MusicTrack[] {
+  if (tracks.length <= PLAYER_TRACK_LIMIT) return tracks;
+  return tracks.slice(0, PLAYER_TRACK_LIMIT);
+}
 
 export function GlobalPlayer() {
   const [mounted, setMounted] = useState(false);
@@ -49,7 +55,7 @@ export function GlobalPlayer() {
     } catch {
       /* ignore corrupt cache */
     }
-    if (cached && cached.length) setTracks(cached);
+    if (cached && cached.length) setTracks(limitTracks(cached));
 
     let cancelled = false;
     const load = () => {
@@ -63,7 +69,7 @@ export function GlobalPlayer() {
         })
         .then((fresh) => {
           if (cancelled || !fresh.length) return;
-          setTracks(fresh);
+          setTracks(limitTracks(fresh));
           try {
             localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), tracks: fresh }));
           } catch {
@@ -104,12 +110,12 @@ function MusicStatusButton({ pulse = false }: { pulse?: boolean }) {
   return (
     <MusicPlayerDock>
       <div
-        className={`flex h-14 w-14 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-400 shadow-[0_12px_28px_rgba(15,23,42,0.12)] ring-4 ring-white dark:border-zinc-700 dark:bg-zinc-900 dark:ring-zinc-900 ${
-          pulse ? 'animate-pulse' : ''
+        className={`relative flex h-[52px] w-[52px] items-center justify-center rounded-full bg-sky-400 text-zinc-950 shadow-[0_10px_24px_rgba(56,189,248,0.42)] ${
+          pulse ? 'animate-pulse' : 'opacity-80'
         }`}
         title={pulse ? 'Loading music' : 'Music unavailable'}
       >
-        <Music className="h-5 w-5" />
+        <Music className="h-5 w-5" strokeWidth={2.4} />
       </div>
     </MusicPlayerDock>
   );

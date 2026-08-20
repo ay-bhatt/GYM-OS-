@@ -29,6 +29,18 @@ export type MusicServiceOptions = {
   category?: MusicCategory | string;
 };
 
+const PLAYER_CATALOG_LIMIT = 400;
+
+function sampleTracks(tracks: MusicTrack[], limit: number): MusicTrack[] {
+  if (tracks.length <= limit) return tracks;
+  const copy = tracks.slice();
+  for (let i = 0; i < limit; i++) {
+    const j = i + Math.floor(Math.random() * (copy.length - i));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, limit);
+}
+
 function toClientPlaybackTrack(track: MusicTrack): MusicTrack {
   const withProviderCache = rewritePixabayStreamUrl(track);
   return {
@@ -90,7 +102,7 @@ export class MusicService {
       if (filtered.length >= 20) source = filtered;
     }
 
-    return source.map(toClientPlaybackTrack);
+    return sampleTracks(source, PLAYER_CATALOG_LIMIT).map(toClientPlaybackTrack);
   }
 
   async getTrackById(id: string): Promise<MusicTrack | null> {

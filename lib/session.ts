@@ -12,11 +12,16 @@ export async function getSession(): Promise<SessionUser | null> {
 
   try {
     const supabase = createServerClient();
-    const { data: currentUser } = await supabase
-      .from('users')
-      .select('id, username, role, gym_id, name, status')
-      .eq('id', session.userId)
-      .maybeSingle();
+    const { data: currentUser } = await Promise.race([
+      supabase
+        .from('users')
+        .select('id, username, role, gym_id, name, status')
+        .eq('id', session.userId)
+        .maybeSingle(),
+      new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('session lookup timeout')), 2500);
+      }),
+    ]);
 
     if (currentUser) {
       if (currentUser.status && currentUser.status !== 'active') {

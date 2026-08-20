@@ -11,9 +11,12 @@ export default function Home() {
 
   useEffect(() => {
     let cancelled = false;
+    const failsafe = window.setTimeout(() => {
+      if (!cancelled) setAuthChecking(false);
+    }, 4000);
 
-    fetch('/api/auth/me')
-      .then((res) => res.json())
+    fetch('/api/auth/me', { cache: 'no-store' })
+      .then((res) => res.json().catch(() => ({ authenticated: false })))
       .then((data) => {
         if (cancelled) return;
         if (data.authenticated && data.user) {
@@ -28,6 +31,7 @@ export default function Home() {
 
     return () => {
       cancelled = true;
+      window.clearTimeout(failsafe);
     };
   }, [router]);
 

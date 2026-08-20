@@ -1,37 +1,102 @@
 'use client';
 
-import { useCallback, useEffect, useId, useRef, useState, type MouseEvent } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Music, Pause, Play, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import * as SliderPrimitive from '@radix-ui/react-slider';
+import {
+  Music,
+  Pause,
+  Play,
+  Repeat,
+  Repeat1,
+  Shuffle,
+  SkipBack,
+  SkipForward,
+  Volume2,
+  VolumeX,
+  X,
+} from 'lucide-react';
 import type { MusicTrack } from '@/lib/music/provider';
-import type { AudioPlayerControls } from './use-audio-player';
+import type { AudioPlayerControls, RepeatMode } from './use-audio-player';
 import { cn } from '@/lib/utils';
 
 function formatTime(seconds: number): string {
-  if (!isFinite(seconds) || seconds <= 0) return '—:—';
+  if (!isFinite(seconds) || seconds < 0) seconds = 0;
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 function Equalizer({ playing }: { playing: boolean }) {
+  const reduceMotion = useReducedMotion();
+  const rest = [8, 14, 10];
   return (
-    <span className="flex h-4 items-end gap-[3px]" aria-hidden>
-      {[0, 1, 2].map((index) => (
+    <span className="flex h-3.5 items-end gap-[2px]" aria-hidden>
+      {rest.map((height, index) => (
         <motion.span
           key={index}
-          className="w-[3px] rounded-full bg-white"
-          animate={playing ? { height: [5, 14, 7, 16, 5] } : { height: 5 }}
+          className="w-[2.5px] rounded-full bg-sky-400"
+          animate={playing && !reduceMotion ? { height: [height - 4, height, 6, height + 2, height - 4] } : { height }}
           transition={
-            playing
+            playing && !reduceMotion
               ? { duration: 0.72, repeat: Infinity, delay: index * 0.12, ease: 'easeInOut' }
-              : { duration: 0.18 }
+              : { duration: 0.16 }
           }
         />
       ))}
     </span>
   );
+}
+
+function CompactSlider({
+  value,
+  max,
+  step = 1,
+  onValueChange,
+  onValueCommit,
+  ariaLabel,
+  ariaValueText,
+}: {
+  value: number;
+  max: number;
+  step?: number;
+  onValueChange: (value: number) => void;
+  onValueCommit?: (value: number) => void;
+  ariaLabel: string;
+  ariaValueText?: string;
+}) {
+  return (
+    <SliderPrimitive.Root
+      value={[value]}
+      min={0}
+      max={Math.max(max, 0.01)}
+      step={step}
+      onValueChange={([next]) => onValueChange(next)}
+      onValueCommit={onValueCommit ? ([next]) => onValueCommit(next) : undefined}
+      aria-label={ariaLabel}
+      aria-valuetext={ariaValueText}
+      className="relative flex h-4 w-full touch-none select-none items-center"
+    >
+      <SliderPrimitive.Track className="relative h-[3px] w-full grow overflow-hidden rounded-full bg-zinc-600">
+        <SliderPrimitive.Range className="absolute h-full rounded-full bg-sky-400" />
+      </SliderPrimitive.Track>
+      <SliderPrimitive.Thumb
+        className={cn(
+          'block h-2.5 w-2.5 rounded-full bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.55)]',
+          'border-0 transition-transform duration-150',
+          'hover:scale-125 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80',
+          'focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b1220]'
+        )}
+      />
+    </SliderPrimitive.Root>
+  );
+}
+
+function repeatLabel(repeat: RepeatMode) {
+  if (repeat === 'one') return 'Repeat one';
+  if (repeat === 'all') return 'Repeat all';
+  return 'Repeat off';
 }
 
 export function MusicPlayerDock({ children }: { children: React.ReactNode }) {
@@ -41,10 +106,9 @@ export function MusicPlayerDock({ children }: { children: React.ReactNode }) {
   return (
     <div
       className={cn(
-        'pointer-events-auto fixed z-[100]',
-        liftForGymNav ? 'bottom-[calc(5.5rem+24px)] lg:bottom-6' : 'bottom-6'
+        'pointer-events-auto fixed z-[100] right-4 sm:right-6',
+        liftForGymNav ? 'bottom-[calc(5.5rem+20px)] lg:bottom-6' : 'bottom-5 sm:bottom-6'
       )}
-      style={{ right: 24 }}
     >
       {children}
     </div>
@@ -57,12 +121,37 @@ interface MusicPlayerProps {
 }
 
 export function MusicPlayer({ track, controls }: MusicPlayerProps) {
-  const { isPlaying, currentTime, duration, progress, hasTracks, error, isMuted } = controls;
+  const {
+    isPlaying,
+    currentTime,
+    duration,
+    hasTracks,
+    error,
+    isMuted,
+    volume,
+    shuffle,
+    repeat,
+  } = controls;
   const canPlay = hasTracks && Boolean(track?.streamUrl);
   const panelId = useId();
   const rootRef = useRef<HTMLDivElement | null>(null);
   const hoverableRef = useRef(false);
+  const suppressHoverRef = useRef(false);
+  const closeTimerRef = useRef<number | null>(null);
+  const reduceMotion = useReducedMotion();
   const [open, setOpen] = useState(false);
+  const [artFailed, setArtFailed] = useState(false);
+  const [seekPreview, setSeekPreview] = useState<number | null>(null);
+
+  useEffect(() => {
+    setArtFailed(false);
+  }, [track?.id, track?.artworkUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current != null) window.clearTimeout(closeTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const media = window.matchMedia('(hover: hover) and (pointer: fine)');
@@ -90,25 +179,40 @@ export function MusicPlayer({ track, controls }: MusicPlayerProps) {
     };
   }, [open]);
 
-  const seekFromEvent = (e: MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width;
-    controls.seek((duration || 0) * Math.max(0, Math.min(1, x)));
+  const clearCloseTimer = () => {
+    if (closeTimerRef.current != null) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
   };
 
   const openFromHover = useCallback(() => {
-    if (hoverableRef.current) setOpen(true);
+    clearCloseTimer();
+    if (hoverableRef.current && !suppressHoverRef.current) setOpen(true);
   }, []);
 
   const closeFromHover = useCallback(() => {
-    if (hoverableRef.current) setOpen(false);
+    suppressHoverRef.current = false;
+    if (!hoverableRef.current) return;
+    clearCloseTimer();
+    closeTimerRef.current = window.setTimeout(() => setOpen(false), 140);
   }, []);
+
+  const collapse = useCallback(() => {
+    suppressHoverRef.current = true;
+    clearCloseTimer();
+    setOpen(false);
+  }, []);
+
+  const displayedTime = seekPreview ?? currentTime;
+  const displayedVolume = isMuted ? 0 : volume;
+  const RepeatIcon = repeat === 'one' ? Repeat1 : Repeat;
 
   return (
     <MusicPlayerDock>
       <div
         ref={rootRef}
-        className="relative flex flex-col items-end gap-3"
+        className="relative flex flex-col items-end"
         onMouseEnter={openFromHover}
         onMouseLeave={closeFromHover}
       >
@@ -118,109 +222,186 @@ export function MusicPlayer({ track, controls }: MusicPlayerProps) {
               id={panelId}
               role="dialog"
               aria-label="Now playing"
-              initial={{ opacity: 0, y: 12, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 12, scale: 0.96 }}
-              transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-              className={cn(
-                'w-[min(20rem,calc(100vw-48px))] overflow-hidden rounded-2xl border border-zinc-200/80',
-                'bg-white/95 p-3 shadow-[0_18px_50px_rgba(15,23,42,0.16)] backdrop-blur-md',
-                'dark:border-zinc-700/80 dark:bg-zinc-900/95'
-              )}
+              initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 10, scale: 0.96 }}
+              animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
+              exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 10, scale: 0.96 }}
+              transition={{ duration: reduceMotion ? 0.01 : 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute bottom-full right-0 z-10 origin-bottom-right pb-3"
             >
-              <div className="flex items-center gap-3">
-                {track?.artworkUrl ? (
-                  <img
-                    src={track.artworkUrl}
-                    alt={`Cover for ${track.title}`}
-                    className="h-12 w-12 flex-shrink-0 rounded-xl object-cover"
-                    loading="lazy"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                ) : (
-                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-500 dark:bg-sky-500/10 dark:text-sky-300">
-                    <Music className="h-5 w-5" />
-                  </div>
+              <div
+                className={cn(
+                  'w-[min(312px,calc(100vw-2rem))] overflow-hidden rounded-2xl',
+                  'border border-sky-400/15 bg-[#0b1220]/95 p-3 backdrop-blur-xl',
+                  'shadow-[0_18px_40px_rgba(0,0,0,0.5),0_0_24px_rgba(14,165,233,0.16)]'
                 )}
-                <div className="min-w-0 flex-1 leading-tight">
-                  <p className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100" title={track?.title}>
-                    {track?.title || '—'}
-                  </p>
-                  <p
-                    className="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400"
-                    title={error || track?.artist}
-                  >
-                    {error || track?.artist || '—'}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  aria-label={isMuted ? 'Unmute' : 'Mute'}
-                  onClick={() => controls.setMuted(!isMuted)}
-                  className="rounded-full p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-                >
-                  {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                </button>
-              </div>
+              >
+                <div className="flex items-start gap-3">
+                  {track?.artworkUrl && !artFailed ? (
+                    <img
+                      src={track.artworkUrl}
+                      alt={`Cover for ${track.title}`}
+                      className="h-[54px] w-[54px] flex-shrink-0 rounded-[10px] object-cover"
+                      loading="lazy"
+                      onError={() => setArtFailed(true)}
+                    />
+                  ) : (
+                    <div className="flex h-[54px] w-[54px] flex-shrink-0 items-center justify-center rounded-[10px] bg-sky-500/10 text-sky-400">
+                      <Music className="h-5 w-5" />
+                    </div>
+                  )}
 
-              <div className="mt-3 flex items-center gap-2">
-                <span className="w-8 text-right text-[10px] tabular-nums text-zinc-400">{formatTime(currentTime)}</span>
-                <div
-                  role="slider"
-                  aria-label="Seek track"
-                  aria-valuenow={currentTime}
-                  aria-valuemin={0}
-                  aria-valuemax={duration || 1}
-                  tabIndex={0}
-                  onClick={seekFromEvent}
-                  className="relative h-1.5 flex-1 cursor-pointer rounded-full bg-zinc-200 dark:bg-zinc-700"
-                >
-                  <div className="h-full rounded-full bg-sky-500" style={{ width: `${progress * 100}%` }} />
-                </div>
-                <span className="w-8 text-[10px] tabular-nums text-zinc-400">{formatTime(duration)}</span>
-              </div>
+                  <div className="min-w-0 flex-1 pt-0.5">
+                    <p className="truncate text-[13px] font-semibold leading-tight text-white" title={track?.title}>
+                      {track?.title || '—'}
+                    </p>
+                    <p
+                      className="mt-1 truncate text-[11px] leading-tight text-zinc-400"
+                      title={error || track?.artist}
+                    >
+                      {error || track?.artist || '—'}
+                    </p>
+                  </div>
 
-              <div className="mt-2 flex items-center justify-center gap-1">
-                <button
-                  type="button"
-                  aria-label="Previous track"
-                  onClick={controls.prev}
-                  disabled={!canPlay}
-                  className="rounded-full p-2 text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                >
-                  <SkipBack className="h-4 w-4" />
-                </button>
-                <motion.button
-                  type="button"
-                  aria-label={isPlaying ? 'Pause music' : 'Play music'}
-                  onClick={isPlaying ? controls.pause : controls.play}
-                  disabled={!canPlay}
-                  className="mx-1 flex h-10 w-10 items-center justify-center rounded-full bg-sky-500 text-white shadow-[0_8px_18px_rgba(14,165,233,0.35)] hover:bg-sky-400 disabled:opacity-40"
-                  whileTap={{ scale: 0.94 }}
-                >
-                  <AnimatePresence mode="wait" initial={false}>
-                    {isPlaying ? (
-                      <motion.span key="pause" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                        <Pause className="h-4 w-4" />
-                      </motion.span>
-                    ) : (
-                      <motion.span key="play" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                        <Play className="h-4 w-4" />
-                      </motion.span>
+                  <div className="flex flex-shrink-0 flex-col items-end gap-2">
+                    <button
+                      type="button"
+                      aria-label="Collapse player"
+                      onClick={collapse}
+                      className={cn(
+                        'rounded-md p-0.5 text-zinc-400 transition-colors duration-150',
+                        'hover:bg-white/10 hover:text-white',
+                        'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80'
+                      )}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                    <Equalizer playing={isPlaying} />
+                  </div>
+                </div>
+
+                <div className="mt-2.5 flex items-center gap-2">
+                  <span className="w-8 text-right text-[10px] tabular-nums text-zinc-500">
+                    {formatTime(displayedTime)}
+                  </span>
+                  <CompactSlider
+                    value={displayedTime}
+                    max={duration || 1}
+                    step={0.1}
+                    ariaLabel="Seek track"
+                    ariaValueText={`${formatTime(displayedTime)} of ${formatTime(duration)}`}
+                    onValueChange={(next) => {
+                      setSeekPreview(next);
+                      controls.seek(next);
+                    }}
+                    onValueCommit={() => setSeekPreview(null)}
+                  />
+                  <span className="w-8 text-[10px] tabular-nums text-zinc-500">{formatTime(duration)}</span>
+                </div>
+
+                <div className="mt-2.5 flex items-center justify-between px-3">
+                  <button
+                    type="button"
+                    aria-label={shuffle ? 'Disable shuffle' : 'Enable shuffle'}
+                    aria-pressed={shuffle}
+                    onClick={controls.toggleShuffle}
+                    className={cn(
+                      'rounded-md p-1.5 transition-all duration-150 hover:scale-110',
+                      shuffle ? 'text-sky-400' : 'text-zinc-400 hover:text-zinc-200',
+                      'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80'
                     )}
-                  </AnimatePresence>
-                </motion.button>
-                <button
-                  type="button"
-                  aria-label="Next track"
-                  onClick={controls.next}
-                  disabled={!canPlay}
-                  className="rounded-full p-2 text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                >
-                  <SkipForward className="h-4 w-4" />
-                </button>
+                  >
+                    <Shuffle className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Previous track"
+                    onClick={controls.prev}
+                    disabled={!canPlay}
+                    className={cn(
+                      'rounded-md p-1.5 text-zinc-100 transition-all duration-150',
+                      'hover:scale-110 hover:text-white disabled:opacity-40',
+                      'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80'
+                    )}
+                  >
+                    <SkipBack className="h-4 w-4" fill="currentColor" />
+                  </button>
+                  <motion.button
+                    type="button"
+                    aria-label={isPlaying ? 'Pause music' : 'Play music'}
+                    onClick={isPlaying ? controls.pause : controls.play}
+                    disabled={!canPlay}
+                    className={cn(
+                      'flex h-9 w-9 items-center justify-center rounded-full',
+                      'bg-sky-400 text-zinc-950 shadow-[0_8px_18px_rgba(56,189,248,0.38)]',
+                      'transition-transform duration-150 hover:bg-sky-300 disabled:opacity-40',
+                      'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-200'
+                    )}
+                    whileHover={reduceMotion ? undefined : { scale: 1.06 }}
+                    whileTap={reduceMotion ? undefined : { scale: 0.94 }}
+                  >
+                    {isPlaying ? (
+                      <Pause className="h-4 w-4 fill-current" />
+                    ) : (
+                      <Play className="h-4 w-4 fill-current translate-x-[1px]" />
+                    )}
+                  </motion.button>
+                  <button
+                    type="button"
+                    aria-label="Next track"
+                    onClick={controls.next}
+                    disabled={!canPlay}
+                    className={cn(
+                      'rounded-md p-1.5 text-zinc-100 transition-all duration-150',
+                      'hover:scale-110 hover:text-white disabled:opacity-40',
+                      'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80'
+                    )}
+                  >
+                    <SkipForward className="h-4 w-4" fill="currentColor" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={repeatLabel(repeat)}
+                    aria-pressed={repeat !== 'off'}
+                    onClick={controls.cycleRepeat}
+                    className={cn(
+                      'rounded-md p-1.5 transition-all duration-150 hover:scale-110',
+                      repeat !== 'off' ? 'text-sky-400' : 'text-zinc-400 hover:text-zinc-200',
+                      'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80'
+                    )}
+                  >
+                    <RepeatIcon className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                <div className="mt-2.5 h-px bg-white/10" />
+
+                <div className="mt-2.5 flex items-center gap-2">
+                  <button
+                    type="button"
+                    aria-label={isMuted || volume === 0 ? 'Unmute' : 'Mute'}
+                    onClick={controls.toggleMute}
+                    className={cn(
+                      'rounded-md p-1 text-zinc-300 transition-all duration-150',
+                      'hover:scale-110 hover:text-white',
+                      'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80'
+                    )}
+                  >
+                    {isMuted || volume === 0 ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+                  </button>
+                  <CompactSlider
+                    value={displayedVolume}
+                    max={100}
+                    ariaLabel="Volume"
+                    ariaValueText={`${displayedVolume} percent`}
+                    onValueChange={controls.setVolume}
+                  />
+                  <span className="text-zinc-400" aria-hidden>
+                    <Volume2 className="h-3.5 w-3.5" />
+                  </span>
+                  <span className="min-w-[2.4rem] rounded-full bg-white/10 px-2 py-0.5 text-center text-[10px] tabular-nums text-zinc-300">
+                    {displayedVolume}%
+                  </span>
+                </div>
               </div>
             </motion.div>
           )}
@@ -228,22 +409,26 @@ export function MusicPlayer({ track, controls }: MusicPlayerProps) {
 
         <button
           type="button"
-          aria-label={isPlaying ? 'Music player, playing' : 'Music player'}
+          aria-label={isPlaying ? 'Music player, playing' : 'Open music player'}
           aria-expanded={open}
           aria-controls={panelId}
-          onClick={() => setOpen((value) => !value)}
+          onClick={(event) => {
+            const keyboardToggle = event.detail === 0;
+            if (keyboardToggle || !hoverableRef.current) {
+              setOpen((value) => !value);
+              return;
+            }
+            if (!open) setOpen(true);
+          }}
           className={cn(
-            'relative flex h-14 w-14 items-center justify-center rounded-full',
-            'bg-gradient-to-br from-sky-400 to-sky-600 text-white',
-            'shadow-[0_12px_28px_rgba(14,165,233,0.38)]',
-            'ring-4 ring-white dark:ring-zinc-900',
-            'transition-transform hover:scale-[1.04] active:scale-95'
+            'relative flex h-[52px] w-[52px] items-center justify-center rounded-full',
+            'bg-sky-400 text-zinc-950',
+            'shadow-[0_10px_24px_rgba(56,189,248,0.42)]',
+            'transition-transform duration-200 hover:scale-105 active:scale-95',
+            'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-200 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950'
           )}
         >
-          {isPlaying ? (
-            <span className="absolute inset-0 rounded-full bg-sky-400/25 animate-pulse" />
-          ) : null}
-          <Equalizer playing={isPlaying} />
+          <Music className="h-5 w-5" strokeWidth={2.4} />
         </button>
       </div>
     </MusicPlayerDock>
