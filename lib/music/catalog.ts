@@ -151,24 +151,6 @@ export const FALLBACK_CATALOG: MusicTrack[] = [
     isExplicit: false, category: 'strength', status: 'active',
     createdAt: null, updatedAt: null,
   },
-  {
-    id: 'fallback-005',
-    provider: 'audius',
-    providerTrackId: 'AVOzK',
-    title: 'Plus 1 Ft. Nasty C [prod by Twin Plams]',
-    artist: '24HRS',
-    album: null, genre: 'Tropical House', subGenre: null, countryOrRegion: 'US',
-    language: 'English', energyLevel: 2, bpm: null, duration: 190,
-    artworkUrl: null,
-    streamUrl: 'https://api.audius.co/v1/tracks/AVOzK/stream',
-    sourceUrl: null, providerTrackUrl: 'https://api.audius.co/v1/tracks/AVOzK',
-    source: 'Audius', licenseName: 'Original Work', licenseUrl: null,
-    commercialUseAllowed: true, publicPerformanceAllowed: true,
-    attributionRequired: false, attributionText: null,
-    verificationDate: null, verificationNotes: null,
-    isExplicit: false, category: 'cool_down', status: 'active',
-        createdAt: null, updatedAt: null,
-  },
 ];
 
 export function categoryToMode(category: MusicCategory): PlaylistMode {
@@ -187,4 +169,40 @@ export function isTrackGymSafe(t: MusicTrack): boolean {
   if (t.commercialUseAllowed !== true) return false;
   if (t.publicPerformanceAllowed !== true) return false;
   return true;
+}
+
+const SOFT_PATTERN =
+  /lo-?fi|chill(?:out)?|ambient|calm|soft|relax|sleep|study|downtempo|jazz|acoustic|piano|meditation|yoga|asmr|rain|folk|classical|lullaby|mellow|ballad|unplugged|dreamy|spacey|new age/;
+
+const SOFT_GENRES = new Set([
+  'lo-fi',
+  'lofi',
+  'ambient',
+  'chill out',
+  'chillout',
+  'downtempo',
+  'jazz',
+  'acoustic',
+  'classical',
+  'folk',
+  'new age',
+  'blues',
+  'country',
+  'soundtrack',
+  'tropical house',
+  'deep house',
+  'spoken word',
+  'comedy',
+]);
+
+/** Player-only gate: keep driving gym energy, drop lofi / chill / soft tracks. */
+export function isHighIntensityTrack(track: MusicTrack): boolean {
+  if (track.category === 'cool_down' || track.category === 'warm_up') return false;
+  if (typeof track.energyLevel === 'number' && track.energyLevel < 4) return false;
+
+  const genre = (track.genre || '').toLowerCase().trim();
+  if (SOFT_GENRES.has(genre)) return false;
+
+  const blob = `${track.title} ${track.artist} ${genre} ${track.subGenre || ''}`.toLowerCase();
+  return !SOFT_PATTERN.test(blob);
 }

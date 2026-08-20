@@ -135,26 +135,6 @@ const SEED_TRACKS: Array<{
     url: 'https://cdn.pixabay.com/download/audio/2022/10/25/audio_3ea72d75c6.mp3?filename=drop-it-124014.mp3',
     page: 'https://pixabay.com/music/search/drop%20it/',
   },
-  {
-    id: '118327',
-    title: 'Tuesday Glitch Soft Hip Hop',
-    artist: 'Pixabay Music',
-    genre: 'Hip Hop',
-    category: 'workout',
-    energyLevel: 3,
-    url: 'https://cdn.pixabay.com/download/audio/2022/08/25/audio_4f3b0a816e.mp3?filename=tuesday-glitch-soft-hip-hop-118327.mp3',
-    page: 'https://pixabay.com/music/search/hip%20hop/',
-  },
-  {
-    id: '142819',
-    title: 'Floating Abstract',
-    artist: 'Pixabay Music',
-    genre: 'Electronic',
-    category: 'cool_down',
-    energyLevel: 2,
-    url: 'https://cdn.pixabay.com/download/audio/2023/03/16/audio_df7d9198c3.mp3?filename=floating-abstract-142819.mp3',
-    page: 'https://pixabay.com/music/search/abstract/',
-  },
 ];
 
 function inferCategory(tags: string): MusicCategory {

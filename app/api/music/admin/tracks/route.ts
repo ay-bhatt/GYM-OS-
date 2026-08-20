@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
       provider: searchParams.get('provider') || undefined,
       genre: searchParams.get('genre') || undefined,
       country: searchParams.get('country') || undefined,
+      playlist: searchParams.get('playlist') === 'all' ? 'all' : 'floor',
     });
 
     return NextResponse.json({ data: tracks });

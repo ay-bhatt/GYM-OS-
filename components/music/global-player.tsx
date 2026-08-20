@@ -26,13 +26,45 @@ import { useAudioPlayer } from './use-audio-player';
 import { MusicPlayer, MusicPlayerDock } from './music-player';
 import type { MusicTrack } from '@/lib/music/provider';
 
-const CACHE_KEY = 'forggym-music-catalog';
-const CACHE_TTL_MS = 2 * 60 * 1000;
-const PLAYER_TRACK_LIMIT = 400;
+const CACHE_KEY = 'forggym-music-catalog-top1000-v1';
+const CACHE_TTL_MS = 30 * 60 * 1000;
+const PLAYER_TRACK_LIMIT = 1000;
+const AUDIUS_STREAM = 'https://api.audius.co/v1/tracks';
+
+function directStreamUrl(track: MusicTrack): MusicTrack {
+  const url = track.streamUrl || '';
+  if (track.provider === 'pixabay') {
+    if (url.startsWith('/api/music/stream/')) return track;
+    return { ...track, streamUrl: `/api/music/stream/${encodeURIComponent(track.id)}` };
+  }
+  if (/^https?:\/\//i.test(url) && !url.includes('/api/music/stream/')) return track;
+  if (track.provider === 'audius' && track.providerTrackId) {
+    return {
+      ...track,
+      streamUrl: `${AUDIUS_STREAM}/${encodeURIComponent(track.providerTrackId)}/stream?app_name=forggym`,
+    };
+  }
+  return track;
+}
 
 function limitTracks(tracks: MusicTrack[]): MusicTrack[] {
-  if (tracks.length <= PLAYER_TRACK_LIMIT) return tracks;
-  return tracks.slice(0, PLAYER_TRACK_LIMIT);
+  const normalized = tracks.map(directStreamUrl);
+  if (normalized.length <= PLAYER_TRACK_LIMIT) return normalized;
+  return normalized.slice(0, PLAYER_TRACK_LIMIT);
+}
+
+function sameTrackIds(left: MusicTrack[], right: MusicTrack[]) {
+  if (left.length !== right.length) return false;
+  return left.every((track, index) => track.id === right[index].id && track.streamUrl === right[index].streamUrl);
+}
+
+function mergePlayerTracks(prev: MusicTrack[], fresh: MusicTrack[]): MusicTrack[] {
+  const next = limitTracks(fresh);
+  if (!prev.length) return next;
+  const ids = new Set(next.map((track) => track.id));
+  const keepPlaying = prev.filter((track) => !ids.has(track.id));
+  if (!keepPlaying.length) return next;
+  return [...keepPlaying, ...next].slice(0, PLAYER_TRACK_LIMIT + keepPlaying.length);
 }
 
 export function GlobalPlayer() {
@@ -69,12 +101,15 @@ export function GlobalPlayer() {
         })
         .then((fresh) => {
           if (cancelled || !fresh.length) return;
-          setTracks(limitTracks(fresh));
-          try {
-            localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), tracks: fresh }));
-          } catch {
-            /* ignore storage errors */
-          }
+          setTracks((prev) => {
+            const merged = mergePlayerTracks(prev, fresh);
+            try {
+              localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), tracks: merged }));
+            } catch {
+              /* ignore storage errors */
+            }
+            return sameTrackIds(prev, merged) ? prev : merged;
+          });
         })
         .catch(() => {
           // Keep whatever we had (cache or empty).

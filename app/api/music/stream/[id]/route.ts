@@ -1,52 +1,67 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { musicService } from '@/lib/music/music-service';
 import { PixabayMusicProvider } from '@/lib/music/pixabay-provider';
-import { AudiusMusicProvider } from '@/lib/music/audius-provider';
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
+type CachedSource = { url: string; proxy: boolean; expires: number };
+
+const SOURCE_CACHE = new Map<string, CachedSource>();
+const CACHE_MS = 45 * 60 * 1000;
+
+function needsProxy(url: string, provider: string) {
+  return provider === 'pixabay' || url.includes('pixabay.com');
+}
+
+async function resolveSource(id: string): Promise<CachedSource | null> {
+  const cached = SOURCE_CACHE.get(id);
+  if (cached && cached.expires > Date.now()) return cached;
+
+  const source = await musicService.getStreamSource(id);
+  if (!source?.url || source.url.startsWith('/')) return null;
+
+  const resolved: CachedSource = {
+    url: source.url,
+    proxy: needsProxy(source.url, source.provider),
+    expires: Date.now() + CACHE_MS,
+  };
+  SOURCE_CACHE.set(id, resolved);
+  return resolved;
+}
 
 /**
  * GET /api/music/stream/[id]
  *
- * Same-origin proxy so the browser <audio> element does not depend on CDN
- * CORS/hotlink rules. Pixabay needs a pixabay.com Referer; Audius is a 302
- * to a signed content-node URL.
+ * Pixabay CDN blocks hotlinking, so those bytes are proxied with a pixabay.com
+ * Referer. Audius (and anything else) is a 302 to the provider URL so the
+ * browser talks to the CDN directly instead of streaming every range request
+ * through Next.js.
  */
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const id = decodeURIComponent(params.id);
-    const track = await musicService.getTrackById(id);
-
-    let sourceUrl = track ? await musicService.resolveStreamUrl(track.id) : null;
-    if (!sourceUrl && track?.provider === 'audius') {
-      sourceUrl = await new AudiusMusicProvider().getStreamUrl(track.providerTrackId);
-    }
-    if (!sourceUrl && !id.startsWith('pixabay-')) {
-      sourceUrl = await new AudiusMusicProvider().getStreamUrl(id);
-    }
-    if (!sourceUrl || sourceUrl.startsWith('/')) {
+    const source = await resolveSource(id);
+    if (!source) {
       return NextResponse.json({ error: 'Stream unavailable' }, { status: 404 });
     }
 
-    const range = request.headers.get('range');
-    const upstream =
-      track?.provider === 'pixabay' || sourceUrl.includes('pixabay.com')
-        ? await new PixabayMusicProvider().fetchCdn(sourceUrl, range)
-        : await fetch(sourceUrl, {
-            headers: {
-              Accept: 'audio/*,*/*;q=0.9',
-              'User-Agent':
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-              ...(range ? { Range: range } : {}),
-            },
-            redirect: 'follow',
-          });
+    if (!source.proxy) {
+      const response = NextResponse.redirect(source.url, 302);
+      response.headers.set('Cache-Control', 'private, max-age=300');
+      return response;
+    }
 
+    const range = request.headers.get('range');
+    const upstream = await new PixabayMusicProvider().fetchCdn(source.url, range);
     if (!upstream.ok && upstream.status !== 206) {
+      SOURCE_CACHE.delete(id);
       return NextResponse.json({ error: 'Stream unavailable' }, { status: 502 });
     }
 
     const headers = new Headers();
     headers.set('Content-Type', upstream.headers.get('content-type') || 'audio/mpeg');
-    headers.set('Cache-Control', 'public, max-age=3600');
+    headers.set('Cache-Control', 'public, max-age=86400');
     headers.set('Accept-Ranges', upstream.headers.get('accept-ranges') || 'bytes');
     const length = upstream.headers.get('content-length');
     const contentRange = upstream.headers.get('content-range');

@@ -142,8 +142,15 @@ export function useAudioPlayer(tracks: MusicTrack[]): AudioPlayerControls {
     audioRef.current = audio;
     applyAudioGain();
 
-    const onTimeUpdate = () => setCurrentTime(audio.currentTime);
+    let lastUi = 0;
+    const onTimeUpdate = () => {
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      if (now - lastUi < 200) return;
+      lastUi = now;
+      setCurrentTime(audio.currentTime);
+    };
     const onDurationChange = () => setDuration(isFinite(audio.duration) ? audio.duration : 0);
+    const onSeeked = () => setCurrentTime(audio.currentTime);
     const handleEnded = () => {
       failureCountRef.current = 0;
       if (repeatRef.current === 'one') {
@@ -203,6 +210,7 @@ export function useAudioPlayer(tracks: MusicTrack[]): AudioPlayerControls {
 
     audio.addEventListener('timeupdate', onTimeUpdate);
     audio.addEventListener('durationchange', onDurationChange);
+    audio.addEventListener('seeked', onSeeked);
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('error', handleError);
     audio.addEventListener('play', handlePlay);
@@ -212,6 +220,7 @@ export function useAudioPlayer(tracks: MusicTrack[]): AudioPlayerControls {
       audio.pause();
       audio.removeEventListener('timeupdate', onTimeUpdate);
       audio.removeEventListener('durationchange', onDurationChange);
+      audio.removeEventListener('seeked', onSeeked);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
       audio.removeEventListener('play', handlePlay);
@@ -252,18 +261,20 @@ export function useAudioPlayer(tracks: MusicTrack[]): AudioPlayerControls {
         history = [];
       }
     }
-    const currentId =
-      engineRef.current?.current?.id ?? tracks[sequentialIndexRef.current]?.id ?? null;
-    const currentIndex = currentId ? tracks.findIndex((track) => track.id === currentId) : 0;
-    sequentialIndexRef.current = currentIndex >= 0 ? currentIndex : 0;
+    const prevId = engineRef.current?.current?.id ?? null;
 
     if (!engineRef.current) {
       engineRef.current = new ShuffleEngine(tracks, { history });
+      sequentialIndexRef.current = 0;
       setTick((value) => value + 1);
       return;
     }
+
     engineRef.current.setTracks(tracks);
-    setTick((value) => value + 1);
+    const nextId = engineRef.current.current?.id ?? tracks[0]?.id ?? null;
+    const currentIndex = nextId ? tracks.findIndex((track) => track.id === nextId) : 0;
+    sequentialIndexRef.current = currentIndex >= 0 ? currentIndex : 0;
+    if (nextId !== prevId) setTick((value) => value + 1);
   }, [tracks]);
 
   useEffect(() => {
@@ -280,11 +291,13 @@ export function useAudioPlayer(tracks: MusicTrack[]): AudioPlayerControls {
     : tracks[sequentialIndexRef.current] ?? tracks[0] ?? null;
   const hasTracks = tracks.length > 0;
   const progress = duration > 0 ? currentTime / duration : 0;
+  const streamUrl = current?.streamUrl ?? null;
+  const currentId = current?.id ?? null;
 
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio || !current?.streamUrl) return;
-    if (sameSrc(audio, current.streamUrl)) {
+    if (!audio || !streamUrl) return;
+    if (sameSrc(audio, streamUrl)) {
       applyAudioGain();
       if (wantPlayingRef.current && audio.paused) {
         void audio.play().catch(() => setIsPlaying(false));
@@ -292,8 +305,7 @@ export function useAudioPlayer(tracks: MusicTrack[]): AudioPlayerControls {
       return;
     }
 
-    audio.src = current.streamUrl;
-    audio.load();
+    audio.src = streamUrl;
     applyAudioGain();
     setCurrentTime(0);
     setDuration(0);
@@ -310,7 +322,7 @@ export function useAudioPlayer(tracks: MusicTrack[]): AudioPlayerControls {
           setIsPlaying(false);
         });
     }
-  }, [applyAudioGain, tick, current]);
+  }, [applyAudioGain, tick, currentId, streamUrl]);
 
   const play = useCallback(async () => {
     const audio = audioRef.current;
@@ -320,7 +332,6 @@ export function useAudioPlayer(tracks: MusicTrack[]): AudioPlayerControls {
     }
     if (!sameSrc(audio, current.streamUrl)) {
       audio.src = current.streamUrl;
-      audio.load();
     }
     wantPlayingRef.current = true;
     setError(null);

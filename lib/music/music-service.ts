@@ -21,7 +21,8 @@ import { MusicProvider, MusicTrack, MusicCategory, TrackStatus } from './provide
 import { AudiusMusicProvider } from './audius-provider';
 import { PixabayMusicProvider, rewritePixabayStreamUrl } from './pixabay-provider';
 import { FALLBACK_CATALOG, MUSIC_CATEGORIES, DEFAULT_CATEGORY, isTrackGymSafe } from './catalog';
-import { MUSIC_PROVIDER } from './config';
+import { AUDIUS_API_BASE, AUDIUS_APP_NAME, MUSIC_PROVIDER } from './config';
+import { PLAYER_PLAYLIST_SIZE, playerRankOf, selectPlayerPlaylist } from './player-allowlist';
 import { findWorkoutTrack, getWorkoutCatalog } from './workout-catalog';
 
 export type MusicServiceOptions = {
@@ -29,24 +30,26 @@ export type MusicServiceOptions = {
   category?: MusicCategory | string;
 };
 
-const PLAYER_CATALOG_LIMIT = 400;
+export type StreamSource = {
+  url: string;
+  provider: string;
+};
 
-function sampleTracks(tracks: MusicTrack[], limit: number): MusicTrack[] {
-  if (tracks.length <= limit) return tracks;
-  const copy = tracks.slice();
-  for (let i = 0; i < limit; i++) {
-    const j = i + Math.floor(Math.random() * (copy.length - i));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy.slice(0, limit);
+function audiusStreamUrl(providerTrackId: string) {
+  return `${AUDIUS_API_BASE}/v1/tracks/${encodeURIComponent(providerTrackId)}/stream?app_name=${encodeURIComponent(AUDIUS_APP_NAME)}`;
 }
 
 function toClientPlaybackTrack(track: MusicTrack): MusicTrack {
-  const withProviderCache = rewritePixabayStreamUrl(track);
-  return {
-    ...withProviderCache,
-    streamUrl: `/api/music/stream/${encodeURIComponent(track.id)}`,
-  };
+  if (track.provider === 'pixabay') {
+    return rewritePixabayStreamUrl(track);
+  }
+  const streamUrl =
+    track.streamUrl && /^https?:\/\//i.test(track.streamUrl)
+      ? track.streamUrl
+      : track.provider === 'audius' && track.providerTrackId
+        ? audiusStreamUrl(track.providerTrackId)
+        : `/api/music/stream/${encodeURIComponent(track.id)}`;
+  return { ...track, streamUrl };
 }
 
 function createProvider(): MusicProvider {
@@ -89,20 +92,30 @@ export class MusicService {
     if (source.length === 0) {
       const fromDb = await this.fetchApprovedFromDb(opts.category);
       if (fromDb && fromDb.length > 0) {
-        source = fromDb.filter(isTrackGymSafe);
+        source = fromDb;
       } else if (this.provider.name === 'pixabay') {
-        source = (await this.provider.getFeaturedTracks()).filter(isTrackGymSafe);
+        source = await this.provider.getFeaturedTracks();
       } else {
-        source = FALLBACK_CATALOG.filter(isTrackGymSafe);
+        source = FALLBACK_CATALOG;
+      }
+    }
+
+    source = source.filter(isTrackGymSafe);
+    let playlist = selectPlayerPlaylist(source);
+
+    if (playlist.length < PLAYER_PLAYLIST_SIZE) {
+      const fromDb = await this.fetchApprovedFromDb(opts.category);
+      if (fromDb?.length) {
+        playlist = selectPlayerPlaylist([...playlist, ...fromDb.filter(isTrackGymSafe)]);
       }
     }
 
     if (opts.category) {
-      const filtered = source.filter((t) => t.category === opts.category);
-      if (filtered.length >= 20) source = filtered;
+      const filtered = playlist.filter((t) => t.category === opts.category);
+      if (filtered.length >= 20) playlist = filtered;
     }
 
-    return sampleTracks(source, PLAYER_CATALOG_LIMIT).map(toClientPlaybackTrack);
+    return playlist.map(toClientPlaybackTrack);
   }
 
   async getTrackById(id: string): Promise<MusicTrack | null> {
@@ -127,7 +140,14 @@ export class MusicService {
     return null;
   }
 
-  async getAdminTracks(filters: { search?: string; status?: string; provider?: string; genre?: string; country?: string } = {}): Promise<MusicTrack[]> {
+  async getAdminTracks(filters: {
+    search?: string;
+    status?: string;
+    provider?: string;
+    genre?: string;
+    country?: string;
+    playlist?: 'floor' | 'all';
+  } = {}): Promise<MusicTrack[]> {
     try {
       const supabase = tryCreateServerClient();
       if (!supabase) return [];
@@ -148,7 +168,23 @@ export class MusicService {
 
       const { data, error } = await query;
       if (error) throw error;
-            return (data || []).map(this.dbRowToTrack);
+      const ranked = (data || []).map((row) => {
+        const track = this.dbRowToTrack(row);
+        return { ...track, playerRank: playerRankOf(track) };
+      });
+
+      if (filters.playlist === 'all') {
+        return ranked.sort((a, b) => {
+          if (a.playerRank != null && b.playerRank != null) return a.playerRank - b.playerRank;
+          if (a.playerRank != null) return -1;
+          if (b.playerRank != null) return 1;
+          return 0;
+        });
+      }
+
+      return ranked
+        .filter((track) => track.playerRank != null)
+        .sort((a, b) => (a.playerRank ?? 0) - (b.playerRank ?? 0));
     } catch {
       return [];
     }
@@ -234,27 +270,55 @@ export class MusicService {
   }
 
   /**
+   * Fast lookup of the upstream audio URL. Used by the stream proxy so range
+   * requests do not wait on artwork enrichment or a second catalog search.
+   */
+  async getStreamSource(id: string): Promise<StreamSource | null> {
+    const track =
+      findWorkoutTrack(id) ||
+      (await this.fetchTrackFromDb(id)) ||
+      FALLBACK_CATALOG.find((item) => item.id === id || item.providerTrackId === id) ||
+      null;
+
+    if (track) {
+      if (track.streamUrl && /^https?:\/\//i.test(track.streamUrl)) {
+        return { url: track.streamUrl, provider: track.provider };
+      }
+      if (track.provider === 'audius' && track.providerTrackId) {
+        return { url: audiusStreamUrl(track.providerTrackId), provider: 'audius' };
+      }
+      if (track.provider === 'pixabay' && track.providerTrackId) {
+        try {
+          const url = await new PixabayMusicProvider().getStreamUrl(track.providerTrackId);
+          return { url, provider: 'pixabay' };
+        } catch {
+          return null;
+        }
+      }
+    }
+
+    if (id.startsWith('pixabay-')) {
+      try {
+        const url = await new PixabayMusicProvider().getStreamUrl(id.slice('pixabay-'.length));
+        return { url, provider: 'pixabay' };
+      } catch {
+        return null;
+      }
+    }
+
+    if (!id.startsWith('pixabay-')) {
+      return { url: audiusStreamUrl(id), provider: 'audius' };
+    }
+    return null;
+  }
+
+  /**
    * Resolves a stream URL for a track id. The returned URL points at the
    * provider's CDN; the browser fetches audio directly from there.
    */
   async resolveStreamUrl(trackId: string): Promise<string | null> {
-    const track = await this.getTrackById(trackId);
-    if (!track || track.status !== 'active') return null;
-    if (track.streamUrl && /^https?:\/\//i.test(track.streamUrl)) {
-      return track.streamUrl;
-    }
-    try {
-      if (track.provider === 'audius') {
-        return new AudiusMusicProvider().getStreamUrl(track.providerTrackId);
-      }
-      if (track.provider === 'pixabay') {
-        return await new PixabayMusicProvider().getStreamUrl(track.providerTrackId);
-      }
-      return await this.provider.getStreamUrl(track.providerTrackId);
-    } catch (e) {
-      console.warn('[music] getStreamUrl failed, using cached value', e);
-      return track.streamUrl ?? null;
-    }
+    const source = await this.getStreamSource(trackId);
+    return source?.url ?? null;
   }
     // ---------------------------------------------------------------------------
   // Data access

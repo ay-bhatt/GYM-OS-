@@ -47,6 +47,7 @@ export default function SuperAdminMusicPage() {
   const [provider, setProvider] = useState('');
   const [genre, setGenre] = useState('');
   const [country, setCountry] = useState('');
+  const [playlist, setPlaylist] = useState<'floor' | 'all'>('floor');
   const [selected, setSelected] = useState<MusicTrack | null>(null);
   const [deleteTrack, setDeleteTrack] = useState<MusicTrack | null>(null);
   const [confirmValue, setConfirmValue] = useState('');
@@ -67,6 +68,7 @@ export default function SuperAdminMusicPage() {
       if (provider.trim()) params.set('provider', provider.trim());
       if (genre.trim()) params.set('genre', genre.trim());
       if (country.trim()) params.set('country', country.trim());
+      params.set('playlist', playlist);
 
       const res = await fetch(`/api/music/admin/tracks?${params.toString()}`);
       if (!res.ok) throw new Error('Failed to load tracks');
@@ -79,7 +81,7 @@ export default function SuperAdminMusicPage() {
     } finally {
       setLoading(false);
     }
-  }, [country, genre, provider, search, status]);
+  }, [country, genre, playlist, provider, search, status]);
 
   useEffect(() => {
     fetchTracks();
@@ -203,9 +205,33 @@ export default function SuperAdminMusicPage() {
         <div>
           <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-sky-600">Catalog</p>
           <h1 className="admin-page-title">Music Library</h1>
-          <p className="admin-page-sub">Review licensing, activate approved tracks, and keep the gym queue clean.</p>
+          <p className="admin-page-sub">
+            {playlist === 'floor'
+              ? 'High-intensity floor playlist — the same 1000 tracks the gym player shuffles.'
+              : 'Full catalog. Floor playlist tracks stay ranked at the top.'}
+          </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="inline-flex rounded-xl border border-zinc-200 bg-white p-1">
+            <button
+              type="button"
+              onClick={() => setPlaylist('floor')}
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+                playlist === 'floor' ? 'bg-sky-500 text-white' : 'text-zinc-600 hover:bg-zinc-50'
+              }`}
+            >
+              Floor playlist
+            </button>
+            <button
+              type="button"
+              onClick={() => setPlaylist('all')}
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+                playlist === 'all' ? 'bg-sky-500 text-white' : 'text-zinc-600 hover:bg-zinc-50'
+              }`}
+            >
+              Full library
+            </button>
+          </div>
                 <button
           onClick={fetchTracks}
           className="admin-secondary-btn"
@@ -224,7 +250,11 @@ export default function SuperAdminMusicPage() {
       </div>
 
       <div className="mb-4 grid gap-3 md:grid-cols-4">
-        <StatCard label="Total" value={tracks.length} icon={Music2} />
+        <StatCard
+          label={playlist === 'floor' ? 'On the floor' : 'Total'}
+          value={tracks.length}
+          icon={Music2}
+        />
         <StatCard label="Active" value={counts.active} icon={ShieldCheck} />
         <StatCard label="License review" value={counts.license_review} icon={FileText} />
                 <StatCard label="Disabled" value={counts.disabled + counts.broken + counts.removed} icon={ShieldOff} />
@@ -334,6 +364,7 @@ export default function SuperAdminMusicPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-zinc-200 bg-zinc-50">
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Rank</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Track</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Provider</th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Genre</th>
@@ -347,17 +378,31 @@ export default function SuperAdminMusicPage() {
             <tbody>
               {tracks.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-sm text-zinc-500">
-                    No tracks found. Use the "Import" button to search Audius and add tracks to the catalog, or add approved data here to start filling the library.
+                  <td colSpan={9} className="px-4 py-10 text-center text-sm text-zinc-500">
+                    {playlist === 'floor'
+                      ? 'No floor playlist tracks matched. Switch to Full library to see the rest of the catalog.'
+                      : 'No tracks found. Use Import to search Audius and add tracks to the catalog.'}
                   </td>
                 </tr>
               ) : (
                 tracks.map((track) => (
                   <tr key={track.id} className="border-b border-zinc-100 last:border-0">
+                    <td className="px-4 py-3 text-sm tabular-nums text-zinc-500">
+                      {track.playerRank != null ? (
+                        <span className="inline-flex min-w-[2.5rem] items-center justify-center rounded-md bg-sky-50 px-2 py-0.5 text-xs font-semibold text-sky-700">
+                          #{track.playerRank}
+                        </span>
+                      ) : (
+                        <span className="text-zinc-300">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="max-w-[260px]">
                         <p className="truncate text-sm font-medium text-zinc-900">{track.title}</p>
                         <p className="truncate text-xs text-zinc-500">{track.artist}</p>
+                        {track.playerRank != null && playlist === 'all' && (
+                          <p className="mt-1 text-[11px] font-medium text-sky-600">On floor playlist</p>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-zinc-600">
@@ -433,6 +478,10 @@ export default function SuperAdminMusicPage() {
               <Detail label="Provider track ID" value={selected.providerTrackId} />
               <Detail label="Genre" value={selected.genre || '—'} />
               <Detail label="Sub-genre" value={selected.subGenre || '—'} />
+              <Detail
+                label="Floor playlist"
+                value={selected.playerRank != null ? `Rank #${selected.playerRank} of 1000` : 'Not on the gym player'}
+              />
               <Detail label="Energy level" value={selected.energyLevel ? String(selected.energyLevel) : '—'} />
               <Detail label="Region" value={selected.countryOrRegion || '—'} />
               <Detail label="License" value={selected.licenseName || '—'} />

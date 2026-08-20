@@ -98,6 +98,8 @@ export interface MusicTrack {
   status: TrackStatus;
   createdAt: string | null;
   updatedAt: string | null;
+  /** Rank in the gym floor playlist (1–1000). Missing if the track is not on the player. */
+  playerRank?: number | null;
 }
 
 export interface SearchOptions {

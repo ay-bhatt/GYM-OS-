@@ -8,7 +8,7 @@ import { tryCreateServerClient } from '@/lib/supabase-server';
 import type { MusicTrack } from './provider';
 import { AudiusMusicProvider } from './audius-provider';
 import { PixabayMusicProvider } from './pixabay-provider';
-import { FALLBACK_CATALOG } from './catalog';
+import { FALLBACK_CATALOG, isHighIntensityTrack } from './catalog';
 import { AUDIUS_API_BASE, AUDIUS_APP_NAME } from './config';
 
 export const WORKOUT_CATALOG_TARGET = 1000;
@@ -70,7 +70,8 @@ export function findWorkoutTrack(id: string): MusicTrack | null {
 }
 
 function playableSlice(tracks: MusicTrack[]) {
-  return tracks.length > 1500 ? tracks.slice(0, 1500) : tracks;
+  const intense = tracks.filter(isHighIntensityTrack);
+  return intense.length > 1500 ? intense.slice(0, 1500) : intense;
 }
 
 export async function getWorkoutCatalog(): Promise<MusicTrack[]> {
@@ -110,7 +111,7 @@ function asPlayableWorkout(track: MusicTrack): MusicTrack {
   return {
     ...track,
     status: 'active',
-    category: track.category && track.category !== 'cool_down' ? track.category : 'workout',
+    category: track.category || 'workout',
     genre: track.genre || 'Workout',
     commercialUseAllowed: true,
     publicPerformanceAllowed: true,
@@ -136,7 +137,9 @@ async function buildCatalog(): Promise<MusicTrack[]> {
     console.warn('[workout-catalog] pixabay fetch failed', error);
   }
 
-  tracks = unique([...tracks, ...FALLBACK_CATALOG.map(asPlayableWorkout)]).map(asPlayableWorkout);
+  tracks = unique([...tracks, ...FALLBACK_CATALOG.map(asPlayableWorkout)])
+    .map(asPlayableWorkout)
+    .filter(isHighIntensityTrack);
 
   cache = {
     tracks,
@@ -165,7 +168,9 @@ async function expandCatalog() {
   if (have >= WORKOUT_CATALOG_TARGET) return;
   try {
     const extras = await fetchAudiusWorkout(audius, WORKOUT_CATALOG_TARGET - have + 100);
-    const merged = unique([...(cache?.tracks ?? []), ...extras.map(asPlayableWorkout)]);
+    const merged = unique([...(cache?.tracks ?? []), ...extras.map(asPlayableWorkout)]).filter(
+      isHighIntensityTrack
+    );
     cache = {
       tracks: merged,
       expires: Date.now() + CACHE_TTL_MS,
